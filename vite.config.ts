@@ -5,4 +5,24 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/scheduler/') ||
+            id.includes('node_modules/@babel/')
+          ) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/lenis/') || id.includes('node_modules/@use-gesture/')) {
+            return 'gesture-vendor';
+          }
+          return undefined;
+        },
+      },
+    },
+  },
 });

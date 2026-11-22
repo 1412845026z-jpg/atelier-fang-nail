@@ -1,105 +1,99 @@
-import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Lenis from 'lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Lang, SITE_CONFIG, WorkItem } from './config';
-import { NailDesignState } from './types/nail';
+import { Lang, SITE_CONFIG } from './config';
+import { FingerMaskCalibration } from './types/nail';
 import {
-  decodeDesignFromQuery,
-  encodeDesignToQuery,
-  estimateDesign,
+  decodeSelectionFromQuery,
+  encodeSelectionToQuery,
 } from './utils/designCodec';
-import { Preloader } from './components/Preloader';
-import { CustomCursor } from './components/CustomCursor';
+import { usePrefersReducedMotion } from './utils/webgl';
 import { Header } from './components/Header';
-import { HeroTryOnSection } from './sections/HeroTryOnSection';
-
-const WorksCoverflow = lazy(() =>
-  import('./sections/WorksCoverflow').then((m) => ({ default: m.WorksCoverflow }))
-);
-const ServicesPinned = lazy(() =>
-  import('./sections/ServicesPinned').then((m) => ({ default: m.ServicesPinned }))
-);
-const ExplodedNail = lazy(() =>
-  import('./sections/ExplodedNail').then((m) => ({ default: m.ExplodedNail }))
-);
-const StatementDark = lazy(() =>
-  import('./sections/StatementDark').then((m) => ({ default: m.StatementDark }))
-);
-const FinaleSequence = lazy(() =>
-  import('./sections/FinaleSequence').then((m) => ({ default: m.FinaleSequence }))
-);
-const BookingSection = lazy(() =>
-  import('./sections/BookingSection').then((m) => ({ default: m.BookingSection }))
-);
-const FooterSection = lazy(() =>
-  import('./sections/FooterSection').then((m) => ({ default: m.FooterSection }))
-);
-
-gsap.registerPlugin(ScrollTrigger);
-
-function cloneDesign(d: NailDesignState): NailDesignState {
-  return {
-    shape: d.shape,
-    length: d.length,
-    presetId: d.presetId,
-    fingers: d.fingers.map((f) => ({ ...f })) as NailDesignState['fingers'],
-  };
-}
+import { HeroBudSection } from './sections/HeroBudSection';
+import { VanityTraySection } from './sections/VanityTraySection';
+import { TipSampleSection } from './sections/TipSampleSection';
+import { SalonSection } from './sections/SalonSection';
+import { CounselingCardSection } from './sections/CounselingCardSection';
+import { FooterSection } from './sections/FooterSection';
 
 export const App: React.FC = () => {
   const [lang, setLang] = useState<Lang>('ja');
-  const [heroImageReady, setHeroImageReady] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   // Parse ?d=<base64url> and ?calibrate on initial load
-  const [initialUrlFlags] = useState(() => {
+  const [initialParams] = useState(() => {
     if (typeof window === 'undefined') {
-      return { decoded: null as NailDesignState | null, calibrate: false };
+      return { decoded: null, calibrate: false };
     }
-    const params = new URLSearchParams(window.location.search);
-    const dParam = params.get('d');
-    const decoded = dParam ? decodeDesignFromQuery(dParam) : null;
-    const calibrate = params.has('calibrate');
-    return { decoded, calibrate };
+    const qs = new URLSearchParams(window.location.search);
+    const d = qs.get('d');
+    return {
+      decoded: d ? decodeSelectionFromQuery(d) : null,
+      calibrate: qs.has('calibrate'),
+    };
   });
 
-  const [design, setDesign] = useState<NailDesignState>(() =>
-    cloneDesign(initialUrlFlags.decoded || SITE_CONFIG.signatureDesign)
-  );
-  const [history, setHistory] = useState<NailDesignState[]>([]);
-  const [paintTrigger, setPaintTrigger] = useState(0);
+  // Shared design selection across 02 Vanity, 03 Tip Sample Book, and 05 Counseling Card
+  const [activeDesignId, setActiveDesignId] = useState<string>(() => {
+    if (initialParams.decoded && initialParams.decoded.designId !== 'consult') {
+      return initialParams.decoded.designId;
+    }
+    return SITE_CONFIG.hero.defaultRevealDesignId;
+  });
 
-  // Booking bridge state (remains null until user explicitly clicks Book from Try-on / Works / Menu)
-  const [bookingAttachedDesign, setBookingAttachedDesign] =
-    useState<NailDesignState | null>(null);
-  const [bookingAttachedServiceId, setBookingAttachedServiceId] = useState<string | null>(
-    null
+  const [counselingDesignId, setCounselingDesignId] = useState<string>(
+    () => initialParams.decoded?.designId || SITE_CONFIG.hero.defaultRevealDesignId
+  );
+
+  // One-shot inspect trigger when jumping from Vanity 「詳しく見る」 -> 03 チップ見本
+  const [externalInspectId, setExternalInspectId] = useState<string | null>(null);
+
+  // Shared 5-finger mask calibration state (editable when ?calibrate is present)
+  const [calibrations, setCalibrations] = useState<FingerMaskCalibration[]>(
+    SITE_CONFIG.fingerCalibrations
   );
 
   const lenisRef = useRef<Lenis | null>(null);
-  const scrollVelocityRef = useRef(0);
 
-  // Sync <html lang> + JSON-LD NailSalon structured data hydrated from SITE_CONFIG
+  // Sync <html lang> + JSON-LD (NailSalon + FAQPage) hydrated from SITE_CONFIG
   useEffect(() => {
     document.documentElement.lang = lang;
 
-    const jsonLd = {
+    const baseUrl =
+      typeof window !== 'undefined'
+        ? window.location.origin + window.location.pathname
+        : '';
+
+    const graph = {
       '@context': 'https://schema.org',
-      '@type': 'NailSalon',
-      name: SITE_CONFIG.brandName,
-      url: typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '',
-      priceRange: SITE_CONFIG.priceRangeLabel,
-      openingHours: SITE_CONFIG.contact.openingHoursSchema,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: SITE_CONFIG.contact.address[lang],
-        postalCode: SITE_CONFIG.contact.postalCode,
-        addressLocality: 'Meguro-ku',
-        addressRegion: 'Tokyo',
-        addressCountry: 'JP',
-      },
-      sameAs: [`https://instagram.com/${SITE_CONFIG.contact.instagramHandle}`],
+      '@graph': [
+        {
+          '@type': 'NailSalon',
+          name: SITE_CONFIG.brandName,
+          url: baseUrl,
+          priceRange: SITE_CONFIG.priceRangeLabel,
+          openingHours: SITE_CONFIG.contact.openingHoursSchema,
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: SITE_CONFIG.contact.address[lang],
+            postalCode: SITE_CONFIG.contact.postalCode,
+            addressLocality: 'Meguro-ku',
+            addressRegion: 'Tokyo',
+            addressCountry: 'JP',
+          },
+          sameAs: [`https://instagram.com/${SITE_CONFIG.contact.instagramHandle}`],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: SITE_CONFIG.faqs.map((faq) => ({
+            '@type': 'Question',
+            name: faq.q[lang],
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: faq.a[lang],
+            },
+          })),
+        },
+      ],
     };
 
     let script = document.getElementById('sou-json-ld') as HTMLScriptElement | null;
@@ -109,44 +103,27 @@ export const App: React.FC = () => {
       script.type = 'application/ld+json';
       document.head.appendChild(script);
     }
-    script.textContent = JSON.stringify(jsonLd);
+    script.textContent = JSON.stringify(graph);
   }, [lang]);
 
+  // Silky Lenis smooth scroll
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReducedMotion(mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, []);
-
-  // Synchronize Lenis smooth scroll with GSAP ScrollTrigger
-  useEffect(() => {
-    if (reducedMotion) {
-      ScrollTrigger.refresh();
-      return;
-    }
-
+    if (reducedMotion) return;
     const lenis = new Lenis({
       lerp: 0.1,
       smoothWheel: true,
     });
     lenisRef.current = lenis;
 
-    lenis.on('scroll', (e: { velocity: number }) => {
-      scrollVelocityRef.current = e.velocity;
-      ScrollTrigger.update();
-    });
-
-    const tick = (time: number) => {
-      lenis.raf(time * 1000);
+    let rafId = 0;
+    const raf = (time: number) => {
+      lenis.raf(time);
+      rafId = window.requestAnimationFrame(raf);
     };
-
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
+    rafId = window.requestAnimationFrame(raf);
 
     return () => {
-      gsap.ticker.remove(tick);
+      window.cancelAnimationFrame(rafId);
       lenis.destroy();
       lenisRef.current = null;
     };
@@ -157,7 +134,7 @@ export const App: React.FC = () => {
       const target = document.getElementById(sectionId);
       if (!target) return;
       if (lenisRef.current && !reducedMotion) {
-        lenisRef.current.scrollTo(target, { duration: 1.05 });
+        lenisRef.current.scrollTo(target, { duration: 1.0 });
       } else {
         target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
       }
@@ -165,175 +142,107 @@ export const App: React.FC = () => {
     [reducedMotion]
   );
 
-  const scrollToY = useCallback(
-    (y: number) => {
-      if (lenisRef.current && !reducedMotion) {
-        lenisRef.current.scrollTo(y, { duration: 1.0 });
-      } else {
-        window.scrollTo({ top: y, behavior: reducedMotion ? 'auto' : 'smooth' });
-      }
-    },
-    [reducedMotion]
-  );
-
-  // If opened with ?d=<design> or ?calibrate, jump smoothly straight to #tryon
+  // Jump straight to #vanity when opened with ?d=<design> or ?calibrate
   useEffect(() => {
-    if (initialUrlFlags.decoded || initialUrlFlags.calibrate) {
+    if (initialParams.decoded || initialParams.calibrate) {
       const t = window.setTimeout(() => {
-        const el = document.getElementById('tryon');
-        if (el) {
-          el.scrollIntoView({ behavior: 'auto' });
-        }
-      }, 120);
+        document.getElementById('vanity')?.scrollIntoView({ behavior: 'auto' });
+      }, 100);
       return () => window.clearTimeout(t);
     }
-  }, [initialUrlFlags]);
+  }, [initialParams]);
 
-  const handleDesignChange = useCallback(
-    (next: NailDesignState, pushHistory = true) => {
-      setDesign((prev) => {
-        if (pushHistory) {
-          setHistory((h) => [...h.slice(-19), cloneDesign(prev)]);
-        }
-        // Trigger sequential 5-finger brush wipe whenever colors/finishes/presets change
-        const colorOrFinishChanged = prev.fingers.some(
-          (f, i) =>
-            f.colorId !== next.fingers[i].colorId ||
-            f.finish !== next.fingers[i].finish ||
-            f.art !== next.fingers[i].art
-        );
-        if (colorOrFinishChanged) {
-          setPaintTrigger((k) => k + 1);
-        }
-        return cloneDesign(next);
-      });
-
-      // Keep URL ?d= silently synced when user edits inside Try-on without polluting history stack
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.set('d', encodeDesignToQuery(next));
-        window.history.replaceState({}, '', url.toString());
-      } catch {
-        // Ignore in restricted environments
-      }
-    },
-    []
-  );
-
-  const handleUndo = useCallback(() => {
-    setHistory((h) => {
-      if (h.length === 0) return h;
-      const last = h[h.length - 1];
-      setDesign(cloneDesign(last));
-      setPaintTrigger((k) => k + 1);
-      return h.slice(0, -1);
-    });
+  // Select design from 02 Vanity -> syncs URL ?d= silently + updates counseling default
+  const handleSelectDesign = useCallback((designId: string) => {
+    setActiveDesignId(designId);
+    setCounselingDesignId(designId);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('d', encodeSelectionToQuery({ designId }));
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Ignore restricted URL environments
+    }
   }, []);
 
-  const handleReset = useCallback(() => {
-    handleDesignChange(SITE_CONFIG.signatureDesign, true);
-  }, [handleDesignChange]);
-
-  // Works detail -> "試着する"
-  const handleTryWork = useCallback(
-    (work: WorkItem) => {
-      handleDesignChange(work.preset, true);
-      scrollToSection('tryon');
-    },
-    [handleDesignChange, scrollToSection]
-  );
-
-  // Works detail -> "予約"
-  const handleBookWork = useCallback(
-    (work: WorkItem) => {
-      const cloned = cloneDesign(work.preset);
-      setDesign(cloned);
-      setBookingAttachedDesign(cloned);
-      setBookingAttachedServiceId(estimateDesign(cloned).serviceId);
-      scrollToSection('booking');
+  // From 02 Vanity or 03 Tip Sample -> 「このネイルで相談」 / 「このデザインで相談」
+  const handleConsultDesign = useCallback(
+    (designId: string) => {
+      setActiveDesignId(designId);
+      setCounselingDesignId(designId);
+      scrollToSection('counseling');
     },
     [scrollToSection]
   );
 
-  // Try-on Studio -> "このデザインで予約"
-  const handleBookWithDesign = useCallback(() => {
-    const cloned = cloneDesign(design);
-    setBookingAttachedDesign(cloned);
-    setBookingAttachedServiceId(estimateDesign(cloned).serviceId);
-    scrollToSection('booking');
-  }, [design, scrollToSection]);
-
-  // Services -> "予約"
-  const handleSelectServiceForBooking = useCallback(
-    (serviceId: string) => {
-      setBookingAttachedServiceId(serviceId);
-      scrollToSection('booking');
+  // From 02 Vanity -> 「詳しく見る」 -> jumps to 03 Tip Sample zoomed onto that tip
+  const handleInspectDetail = useCallback(
+    (designId: string) => {
+      setExternalInspectId(designId);
+      scrollToSection('tips');
     },
     [scrollToSection]
   );
 
-  const handleHeroImageReady = useCallback(() => {
-    setHeroImageReady(true);
-    window.requestAnimationFrame(() => ScrollTrigger.refresh());
-  }, []);
+  // From 03 Tip Sample -> 「化粧台で試す」 -> jumps to 02 Vanity spun to that bottle
+  const handleTryOnVanity = useCallback(
+    (designId: string) => {
+      handleSelectDesign(designId);
+      scrollToSection('vanity');
+    },
+    [handleSelectDesign, scrollToSection]
+  );
 
   return (
     <>
-      <div className="film-grain" aria-hidden="true" />
-      <CustomCursor />
-      <Preloader ready={heroImageReady} reducedMotion={reducedMotion} />
-      <Header
-        lang={lang}
-        onLangChange={setLang}
-        onNavigate={scrollToSection}
-      />
+      <Header lang={lang} onLangChange={setLang} onNavigate={scrollToSection} />
 
       <main>
-        <HeroTryOnSection
+        {/* 01 首页花苞 — 花びらが、指先に。 */}
+        <HeroBudSection
           lang={lang}
-          design={design}
-          onDesignChange={handleDesignChange}
-          onUndo={handleUndo}
-          canUndo={history.length > 0}
-          onReset={handleReset}
-          paintTrigger={paintTrigger}
-          onHeroImageReady={handleHeroImageReady}
-          onNavigateToSection={scrollToSection}
-          onBookWithDesign={handleBookWithDesign}
-          calibrateMode={initialUrlFlags.calibrate}
+          reducedMotion={reducedMotion}
+          onNavigate={scrollToSection}
+          skipIntro={Boolean(initialParams.decoded || initialParams.calibrate)}
         />
 
-        <Suspense fallback={null}>
-          <WorksCoverflow
-            lang={lang}
-            onTryWork={handleTryWork}
-            onBookWork={handleBookWork}
-          />
+        {/* 02 化妆台 — くるくるパレット */}
+        <VanityTraySection
+          lang={lang}
+          activeDesignId={activeDesignId}
+          onSelectDesign={handleSelectDesign}
+          onConsultDesign={handleConsultDesign}
+          onInspectDetail={handleInspectDetail}
+          reducedMotion={reducedMotion}
+          calibrateMode={initialParams.calibrate}
+          calibrations={calibrations}
+          onCalibrationsChange={setCalibrations}
+        />
 
-          <ServicesPinned
-            lang={lang}
-            onScrollToY={scrollToY}
-            onSelectServiceForBooking={handleSelectServiceForBooking}
-          />
+        {/* 03 チップ見本 — 12 Salon Gel Tips + Expandable Menu */}
+        <TipSampleSection
+          lang={lang}
+          externalInspectId={externalInspectId}
+          onClearExternalInspect={() => setExternalInspectId(null)}
+          onTryOnVanity={handleTryOnVanity}
+          onConsultDesign={handleConsultDesign}
+          reducedMotion={reducedMotion}
+        />
 
-          <ExplodedNail lang={lang} design={design} />
+        {/* 04 美甲师与沙龙 */}
+        <SalonSection lang={lang} />
 
-          <StatementDark lang={lang} scrollVelocityRef={scrollVelocityRef} />
-
-          <FinaleSequence lang={lang} />
-
-          <BookingSection
-            lang={lang}
-            attachedDesign={bookingAttachedDesign}
-            attachedServiceId={bookingAttachedServiceId}
-            onEditDesign={() => scrollToSection('tryon')}
-          />
-        </Suspense>
+        {/* 05 カウンセリングカード */}
+        <CounselingCardSection
+          lang={lang}
+          syncedDesignId={counselingDesignId}
+          initialShape={initialParams.decoded?.shape}
+          initialLengthLevel={initialParams.decoded?.lengthLevel}
+        />
       </main>
 
-      <Suspense fallback={null}>
-        <FooterSection lang={lang} />
-      </Suspense>
+      {/* 页脚 (Access, Hours, Placeholder FAQ) */}
+      <FooterSection lang={lang} />
     </>
   );
 };

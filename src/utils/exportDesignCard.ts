@@ -1,22 +1,17 @@
-import { SITE_CONFIG } from '../config';
-import { Lang, NailDesignState } from '../types/nail';
-import { estimateDesign, formatYen } from './designCodec';
+import { getDesignMeta, SITE_CONFIG } from '../config';
+import { Lang, NailDesignItem } from '../types/nail';
 import { resolveAssetUrl } from './assetUrl';
+import { formatYen } from './designCodec';
 
 /**
- * Exports a 1080×1350 Instagram-ready vertical Specimen Design Card PNG.
- * Draws the same-origin base photo + serialized SVG nail overlay onto an offscreen canvas
- * framed in our quiet Tokyo gallery oatmeal-paper stationery layout.
+ * Exports a 1080×1350 luxury Japanese stationery-style Design Card PNG
+ * featuring the real photorealistic manicured hand, champagne-gold hairline frame,
+ * Garamond numbering, verbatim Japanese design name, and "イメージ" caption.
  */
-export async function exportDesignCardPng(params: {
-  svgElement: SVGSVGElement | null;
-  handImageHref: string;
-  design: NailDesignState;
-  lang: Lang;
-}): Promise<boolean> {
-  const { svgElement, handImageHref, design, lang } = params;
-  if (!svgElement) return false;
-
+export async function exportDesignCardPng(
+  design: NailDesignItem,
+  lang: Lang
+): Promise<boolean> {
   const W = 1080;
   const H = 1350;
   const canvas = document.createElement('canvas');
@@ -25,146 +20,138 @@ export async function exportDesignCardPng(params: {
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
 
-  // 1. Editorial oatmeal paper background
-  ctx.fillStyle = '#F2EEE8';
+  // 1. Sheer milk paper ground (#F7F1EE) + subtle blush border tint
+  ctx.fillStyle = '#F7F1EE';
   ctx.fillRect(0, 0, W, H);
 
-  // Subtle architectural outer hairline border
-  ctx.strokeStyle = 'rgba(36, 30, 26, 0.16)';
+  // Delicate outer champagne-gold 1px stationery rule
+  ctx.strokeStyle = 'rgba(199, 169, 127, 0.58)';
   ctx.lineWidth = 2;
   ctx.strokeRect(42, 42, W - 84, H - 84);
 
-  // 2. Load same-origin base hand photo
-  const imgUrl = resolveAssetUrl(handImageHref);
+  // 2. Load same-origin manicured hand photograph
+  const imgUrl = resolveAssetUrl(design.handImage);
   const handImg = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load base hand image for export'));
+    img.onerror = () => reject(new Error('Failed to load design photo for export'));
     img.src = imgUrl;
   });
 
-  // Photo viewport box inside card (1080 - 120 = 960 wide x 940 tall)
-  const frameX = 60;
-  const frameY = 126;
-  const frameW = W - 120;
-  const frameH = 930;
-
-  // Serialize SVG overlay WITHOUT the <image> tag (so no tainted external ref issues)
-  // and render the hand photo first using the exact same "xMidYMid slice" math!
-  const vb = svgElement.viewBox.baseVal;
-  const vbW = vb.width || 1376;
-  const vbH = vb.height || 768;
-
-  // xMidYMid slice mapping from viewBox (vbW x vbH) -> (frameW x frameH)
-  const scale = Math.max(frameW / vbW, frameH / vbH);
-  const drawW = vbW * scale;
-  const drawH = vbH * scale;
-  const offsetX = frameX + (frameW - drawW) * 0.5;
-  const offsetY = frameY + (frameH - drawH) * 0.5;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(frameX, frameY, frameW, frameH);
-  ctx.clip();
-
-  ctx.drawImage(handImg, offsetX, offsetY, drawW, drawH);
-
-  // Clone SVG, hide base <image> & interactive calibration/split chrome, serialize cleanly
-  const clone = svgElement.cloneNode(true) as SVGSVGElement;
-  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  clone.setAttribute('width', String(vbW));
-  clone.setAttribute('height', String(vbH));
-  clone.querySelectorAll('[data-export-exclude="true"]').forEach((el) => el.remove());
-
-  const svgStr = new XMLSerializer().serializeToString(clone);
-  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-  const svgUrl = URL.createObjectURL(svgBlob);
-
-  try {
-    const overlayImg = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('SVG serialization draw failed'));
-      img.src = svgUrl;
-    });
-    ctx.drawImage(overlayImg, offsetX, offsetY, drawW, drawH);
-  } finally {
-    URL.revokeObjectURL(svgUrl);
-  }
-
-  ctx.restore();
-
-  // Crisp 1px frame around photo
-  ctx.strokeStyle = 'rgba(36, 30, 26, 0.14)';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(frameX, frameY, frameW, frameH);
-
-  // 3. Top specimen header bar
-  const est = estimateDesign(design);
+  // Top header row
   const today = new Date();
   const dateStamp = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(
     2,
     '0'
   )}.${String(today.getDate()).padStart(2, '0')}`;
 
-  ctx.fillStyle = '#241E1A';
-  ctx.font = '400 28px Georgia, "Shippori Mincho", serif';
-  ctx.fillText(SITE_CONFIG.brandName, 62, 96);
+  ctx.fillStyle = '#3B2B2C';
+  ctx.font = '400 32px "Cormorant Garamond", Georgia, serif';
+  ctx.fillText(SITE_CONFIG.brandName, 74, 102);
 
-  ctx.fillStyle = '#8A8178';
-  ctx.font = '400 18px "Geist Mono", ui-monospace, monospace';
+  ctx.fillStyle = '#7E6B6C';
+  ctx.font = '400 21px "Cormorant Garamond", Georgia, serif';
   ctx.textAlign = 'right';
-  ctx.fillText(`SPECIMEN ${est.specimenCode} · ${dateStamp}`, W - 62, 94);
+  ctx.fillText(`No.${design.number}   ·   ${dateStamp}`, W - 74, 100);
   ctx.textAlign = 'left';
 
-  // 4. Bottom Specimen Label Card
-  const metaY = frameY + frameH + 54;
+  // Framed 4:3 hand portrait focused gracefully on the manicured hand
+  const frameX = 72;
+  const frameY = 138;
+  const frameW = W - 144; // 936
+  const frameH = 830;
 
-  // Powder-blue 4px specimen vertical bar
-  ctx.fillStyle = '#A7C1D9';
-  ctx.fillRect(60, metaY - 26, 4, 152);
+  // Compute cover crop slightly shifted toward x=61% where the 5 nails sit
+  const imgRatio = handImg.naturalWidth / handImg.naturalHeight;
+  const boxRatio = frameW / frameH;
+  let sx = 0;
+  let sy = 0;
+  let sw = handImg.naturalWidth;
+  let sh = handImg.naturalHeight;
+  if (imgRatio > boxRatio) {
+    sw = handImg.naturalHeight * boxRatio;
+    sx = Math.min(handImg.naturalWidth - sw, (handImg.naturalWidth - sw) * 0.68);
+  } else {
+    sh = handImg.naturalWidth / boxRatio;
+    sy = (handImg.naturalHeight - sh) * 0.45;
+  }
 
-  // Design summary title
-  ctx.fillStyle = '#241E1A';
-  ctx.font = '400 34px Georgia, "Shippori Mincho", serif';
-  const titleText = est.summaryText[lang];
-  ctx.fillText(titleText.length > 34 ? `${titleText.slice(0, 34)}…` : titleText, 84, metaY + 8);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(frameX, frameY, frameW, frameH);
+  ctx.clip();
+  ctx.drawImage(handImg, sx, sy, sw, sh, frameX, frameY, frameW, frameH);
+  ctx.restore();
 
-  // Sub-row: menu + estimated Yen + duration
-  ctx.fillStyle = '#8A8178';
-  ctx.font = '400 19px "Geist Mono", ui-monospace, monospace';
+  // Subtle champagne-gold hairline around photo
+  ctx.strokeStyle = 'rgba(199, 169, 127, 0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(frameX, frameY, frameW, frameH);
+
+  // Small refined 「イメージ」 caption bottom-right of image
+  ctx.fillStyle = 'rgba(247, 241, 238, 0.85)';
+  ctx.fillRect(frameX + frameW - 96, frameY + frameH - 36, 84, 26);
+  ctx.fillStyle = '#7E6B6C';
+  ctx.font = '300 15px "Zen Kaku Gothic New", "Noto Sans JP", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('イメージ', frameX + frameW - 54, frameY + frameH - 18);
+  ctx.textAlign = 'left';
+
+  // 3. Stationery bottom metadata block
+  const meta = getDesignMeta(design);
+  const metaY = frameY + frameH + 66;
+
+  // Color pearl dot + Garamond number
+  ctx.beginPath();
+  ctx.arc(88, metaY - 12, 12, 0, Math.PI * 2);
+  ctx.fillStyle = design.liquidHex;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(199, 169, 127, 0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#C7A97F';
+  ctx.font = '400 22px "Cormorant Garamond", Georgia, serif';
+  ctx.fillText(`No.${design.number}  /  ${meta.label[lang]}`, 114, metaY - 5);
+
+  // Verbatim Japanese Design Name
+  ctx.fillStyle = '#3B2B2C';
+  ctx.font = '400 40px "Zen Old Mincho", "Shippori Mincho B1", serif';
+  ctx.fillText(design.name.ja, 74, metaY + 56);
+
+  // English subtitle + estimate
+  ctx.fillStyle = '#7E6B6C';
+  ctx.font = 'italic 400 24px "Cormorant Garamond", Georgia, serif';
+  ctx.fillText(design.name.en, 74, metaY + 98);
+
+  // Fine divider
+  ctx.strokeStyle = 'rgba(59, 43, 44, 0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(74, metaY + 132);
+  ctx.lineTo(W - 74, metaY + 132);
+  ctx.stroke();
+
+  // Footer row: price · duration · studio IG
+  ctx.fillStyle = '#3B2B2C';
+  ctx.font = '400 22px "Cormorant Garamond", Georgia, serif';
   ctx.fillText(
-    `${est.menuName[lang]}   ·   ${formatYen(est.estimatedYen)}   ·   ${est.estimatedMinutes} MIN`,
-    84,
-    metaY + 54
+    `${formatYen(meta.priceYen)}   ·   ${meta.durationMin} min`,
+    74,
+    metaY + 174
   );
 
-  // Five miniature color dots representing each finger's formula
-  design.fingers.forEach((f, idx) => {
-    const sw = SITE_CONFIG.palette.find((p) => p.id === f.colorId);
-    const x = 84 + idx * 34;
-    const y = metaY + 100;
-    ctx.beginPath();
-    ctx.arc(x + 9, y, 9, 0, Math.PI * 2);
-    ctx.fillStyle = sw?.hex || '#EDE6DF';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(36, 30, 26, 0.25)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  });
-
-  // Right-side studio signature
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#8A8178';
-  ctx.font = '400 17px "Geist Mono", ui-monospace, monospace';
-  ctx.fillText(`@${SITE_CONFIG.contact.instagramHandle}`, W - 62, metaY + 105);
+  ctx.fillStyle = '#7E6B6C';
+  ctx.font = '400 20px "Cormorant Garamond", Georgia, serif';
+  ctx.fillText(`@${SITE_CONFIG.contact.instagramHandle}   ·   Tokyo`, W - 74, metaY + 174);
   ctx.textAlign = 'left';
 
-  // 5. Trigger PNG download
+  // Trigger download
   const pngUrl = canvas.toDataURL('image/png');
   const link = document.createElement('a');
-  link.download = `sou-nail-specimen-${est.specimenCode.replace(/\./g, '').toLowerCase()}.png`;
+  link.download = `sou-nail-no${design.number}.png`;
   link.href = pngUrl;
   document.body.appendChild(link);
   link.click();

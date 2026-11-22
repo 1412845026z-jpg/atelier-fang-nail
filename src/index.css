@@ -1,19 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --bg-oat: #F2EEE8;
-  --ink-cocoa: #241E1A;
-  --ink-muted: #8A8178;
-  --accent-ribbon: #A7C1D9;
-  --bg-dark: #1C1917;
-  --hairline: rgba(36, 30, 26, 0.15);
-  --hairline-dark: rgba(242, 238, 232, 0.16);
+  /* Japanese Luxury Beauty Palette (v3 — uka / SUQQU / Clé de Peau / ADDICTION + hint of JILL STUART) */
+  --bg-milk: #F7F1EE;        /* シアーミルク */
+  --bg-blush: #EFE3DE;       /* ピンクベージュ */
+  --ink-rose: #3B2B2C;       /* ローズブラウン */
+  --ink-muted: #7E6B6C;      /* ミュートローズ */
+  --accent-rose: #C9989A;    /* くすみローズ */
+  --accent-gold: #C7A97F;    /* シャンパンゴールド (1px lines, numbers, bottle caps) */
+  --bg-bordeaux: #2A1D1F;    /* ボルドーブラウン (optional subtle dark accent) */
 
-  --font-serif: "Instrument Serif", "Shippori Mincho", "Hiragino Mincho ProN", Georgia, serif;
-  --font-sans: "Geist", "Noto Sans JP", "Hiragino Sans", -apple-system, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --hairline: rgba(59, 43, 44, 0.12);
+  --hairline-gold: rgba(199, 169, 127, 0.42);
+  --hairline-rose: rgba(201, 152, 154, 0.36);
+  --surface-paper: #FBF7F4;
 
-  --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Editorial Japanese Beauty Typography — NO monospace laboratory vibe */
+  --font-serif-jp: "Zen Old Mincho", "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+  --font-serif-en: "Cormorant Garamond", "Zen Old Mincho", Georgia, serif;
+  --font-sans-jp: "Zen Kaku Gothic New", "Noto Sans JP", "Hiragino Sans", -apple-system, sans-serif;
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-silk: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 *,
@@ -23,50 +31,54 @@
 }
 
 html {
-  background-color: var(--bg-oat);
-  color: var(--ink-cocoa);
-  font-family: var(--font-sans);
+  background-color: var(--bg-milk);
+  color: var(--ink-rose);
+  font-family: var(--font-sans-jp);
+  font-weight: 300;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   margin: 0;
-  background-color: var(--bg-oat);
-  color: var(--ink-cocoa);
+  background-color: var(--bg-milk);
+  color: var(--ink-rose);
   overflow-x: clip;
-  line-height: 1.55;
+  line-height: 1.7;
+  selection-background-color: rgba(201, 152, 154, 0.25);
 }
 
-/* Subtle 3% opacity editorial film grain texture across entire viewport */
-.film-grain {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  pointer-events: none;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
+::selection {
+  background-color: rgba(201, 152, 154, 0.28);
+  color: var(--ink-rose);
 }
 
-.font-editorial {
-  font-family: var(--font-serif);
+/* Typography helpers */
+.font-mincho {
+  font-family: var(--font-serif-jp);
   font-weight: 400;
 }
 
+.font-garamond {
+  font-family: var(--font-serif-en);
+  font-weight: 400;
+}
+
+.font-num {
+  font-family: var(--font-serif-en);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 .font-body {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans-jp);
+  font-weight: 300;
 }
 
-.font-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Strict Japanese typographic break discipline (no mid-word katakana splits) */
+/* Strict Japanese typographic break discipline */
 .jp-heading {
   word-break: keep-all;
   line-break: strict;
@@ -82,72 +94,110 @@ body {
   border-bottom: 1px solid var(--hairline);
 }
 
-.hairline-all {
-  border: 1px solid var(--hairline);
+.hairline-gold {
+  border: 1px solid var(--hairline-gold);
 }
 
-/* Code-rendered translucent Japanese frosted vellum paper grain */
-.vellum-paper-texture {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.09'/%3E%3C/svg%3E");
-  background-size: 220px 220px;
+/* Subtle veil paper grain for stationery counseling card (ultra-refined 2.5% fiber) */
+.paper-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.045'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
 }
 
-/* Gentle levitation for active center Coverflow card (2.5s, 6px) */
-@keyframes coverflowFloat {
+/* Gentle breathing animation for hero hint & static bud fallback */
+@keyframes softBreathe {
   0%, 100% {
-    transform: translateY(0px);
+    transform: scale(1);
+    opacity: 0.92;
   }
   50% {
-    transform: translateY(-6px);
-  }
-}
-
-.animate-float-center {
-  animation: coverflowFloat 2.5s ease-in-out infinite;
-}
-
-@keyframes scrubCue {
-  0%, 100% {
-    transform: translateX(0px);
-  }
-  50% {
-    transform: translateX(28px);
-  }
-}
-
-.animate-scrub-cue {
-  animation: scrubCue 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-}
-
-@keyframes scrollTick {
-  0% {
-    transform: scaleY(0);
-    transform-origin: top;
-    opacity: 0.9;
-  }
-  50% {
-    transform: scaleY(1);
-    transform-origin: top;
+    transform: scale(1.018);
     opacity: 1;
   }
-  51% {
-    transform-origin: bottom;
+}
+
+.animate-soft-breathe {
+  animation: softBreathe 4.2s ease-in-out infinite;
+}
+
+/* Soft horizontal sheen sweep when nail settles / updates */
+@keyframes nailSheenSweep {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.72;
   }
   100% {
-    transform: scaleY(0);
-    transform-origin: bottom;
-    opacity: 0.2;
+    transform: translateX(160%) skewX(-18deg);
+    opacity: 0;
   }
 }
 
-.animate-scroll-tick {
-  animation: scrollTick 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+.animate-nail-sheen {
+  animation: nailSheenSweep 0.85s var(--ease-soft) forwards;
+}
+
+/* Paper card 3D page turn transitions */
+@keyframes cardFlipForward {
+  0% {
+    opacity: 0.15;
+    transform: perspective(1400px) rotateY(-14deg) translateX(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1400px) rotateY(0deg) translateX(0);
+  }
+}
+
+@keyframes cardFlipBack {
+  0% {
+    opacity: 0.15;
+    transform: perspective(1400px) rotateY(14deg) translateX(-18px);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1400px) rotateY(0deg) translateX(0);
+  }
+}
+
+.card-turn-next {
+  animation: cardFlipForward 0.52s var(--ease-soft) both;
+  transform-origin: left center;
+}
+
+.card-turn-prev {
+  animation: cardFlipBack 0.52s var(--ease-soft) both;
+  transform-origin: right center;
+}
+
+/* Gentle radial light bloom behind hero reveal */
+@keyframes revealBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  45% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+.animate-reveal-bloom {
+  animation: revealBloom 1.15s var(--ease-soft) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-float-center,
-  .animate-scrub-cue,
-  .animate-scroll-tick {
+  .animate-soft-breathe,
+  .animate-nail-sheen,
+  .card-turn-next,
+  .card-turn-prev,
+  .animate-reveal-bloom {
     animation: none !important;
   }
 }
@@ -159,15 +209,44 @@ body {
   display: none;
 }
 
-@media (pointer: fine) and (min-width: 1024px) {
-  body.has-custom-cursor,
-  body.has-custom-cursor a,
-  body.has-custom-cursor button {
-    cursor: none !important;
-  }
+/* Custom slim hairline range slider for Counseling Card length control */
+input[type="range"].sou-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1px;
+  background: rgba(199, 169, 127, 0.55);
+  outline: none;
+}
+
+input[type="range"].sou-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #FBF7F4;
+  border: 1.5px solid #C9989A;
+  cursor: pointer;
+  transition: transform 0.25s var(--ease-soft), background-color 0.25s var(--ease-soft);
+}
+
+input[type="range"].sou-slider::-webkit-slider-thumb:hover,
+input[type="range"].sou-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+  background: #EFE3DE;
+}
+
+input[type="range"].sou-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #FBF7F4;
+  border: 1.5px solid #C9989A;
+  cursor: pointer;
 }
 
 :focus-visible {
-  outline: 1.5px solid var(--accent-ribbon);
-  outline-offset: 2px;
+  outline: 1.5px solid var(--accent-rose);
+  outline-offset: 3px;
 }

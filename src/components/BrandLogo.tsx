@@ -3,41 +3,66 @@ import { SITE_CONFIG } from '../config';
 
 interface BrandLogoProps {
   color?: string;
-  size?: 'sm' | 'md';
+  accentColor?: string;
+  size?: 'sm' | 'md' | 'lg';
+  shortOnly?: boolean;
 }
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({
-  color = '#241E1A',
+  color = '#3B2B2C',
+  accentColor = '#C7A97F',
   size = 'sm',
+  shortOnly = false,
 }) => {
-  const iconSize = size === 'sm' ? 18 : 24;
+  const markSize = size === 'lg' ? 26 : size === 'md' ? 20 : 16;
+  const wordSize =
+    size === 'lg'
+      ? 'text-[34px] sm:text-[42px]'
+      : size === 'md'
+        ? 'text-[22px]'
+        : 'text-[18px]';
+  const subSize = size === 'lg' ? 'text-[13px]' : 'text-[10px]';
+
   return (
-    <span className="inline-flex items-center gap-2.5 select-none" style={{ color }}>
+    <span className="inline-flex items-center gap-2.5 select-none">
+      {/* Minimalist curved gel-petal emblem */}
       <svg
-        width={iconSize}
-        height={iconSize}
+        width={markSize}
+        height={markSize}
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
         className="shrink-0"
       >
         <path
-          d="M 12 2.5 C 15.8 2.5 18.2 9.4 18.2 15.6 C 18.2 19.3 15.5 21.5 12 21.5 C 8.5 21.5 5.8 19.3 5.8 15.6 C 5.8 9.4 8.2 2.5 12 2.5 Z"
+          d="M12 2.4 C16.3 2.4 18.6 8.4 18.6 14.6 C18.6 18.9 15.8 21.4 12 21.4 C8.2 21.4 5.4 18.9 5.4 14.6 C5.4 8.4 7.7 2.4 12 2.4 Z"
           stroke={color}
-          strokeWidth="1.2"
+          strokeWidth="1.05"
         />
         <path
-          d="M 8.2 7.2 Q 12 5.2 15.8 7.2"
-          stroke="#A7C1D9"
-          strokeWidth="1.5"
+          d="M8.6 7.8 Q12 5.4 15.4 7.8"
+          stroke="#C9989A"
+          strokeWidth="1.2"
           strokeLinecap="round"
         />
+        <circle cx="12" cy="17.2" r="1.2" fill={accentColor} />
       </svg>
-      <span
-        className="font-editorial leading-none tracking-[-0.015em]"
-        style={{ fontSize: size === 'sm' ? '20px' : '26px', color }}
-      >
-        {SITE_CONFIG.brandName}
+
+      <span className="inline-flex items-baseline gap-2 leading-none">
+        <span
+          className={`font-garamond tracking-[0.06em] ${wordSize}`}
+          style={{ color }}
+        >
+          {SITE_CONFIG.brandShort}
+        </span>
+        {!shortOnly && (
+          <span
+            className={`font-garamond italic tracking-[0.14em] opacity-65 ${subSize}`}
+            style={{ color }}
+          >
+            nail atelier
+          </span>
+        )}
       </span>
     </span>
   );

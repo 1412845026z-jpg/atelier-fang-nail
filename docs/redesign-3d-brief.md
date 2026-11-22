@@ -8,12 +8,14 @@
 ## 0. 一句话说清楚要做什么
 
 这不是"带试戴功能的美甲店官网"，而是**一个可以上手玩的指尖化妆台**：
-1. 首页：亲手拉动缎带，把一只手从袖口里拉出来，露出美甲（钩子）。
+1. 首页：亲手拨开一朵由"花瓣"组成的花苞，花瓣飘落到一只手的指尖上，变成美甲（原创钩子，见 4 · 01）。
 2. 化妆台：转动 3D 甲油瓶托盘，手上的美甲跟着变（卖点）。
 3. チップ見本：转动 3D 美甲样品环，看这家店能做哪些美甲（产品页）。
 4. カウンセリングカード：像填一张漂亮的卡片一样，把想要的款式发给美甲师（咨询 / 预约）。
 
 网站功能本来就不多，核心作用是**展示 + 咨询**。所有操作都是**直接用手（鼠标 / 手指）去拖、转、拉物体**，不是点选项按钮。
+
+**原创要求**：不照搬任何已知广告或品牌的创意。用户之前给过的参考视频（比如从袖口拉出丝带、露出美甲的短视频），只用来说明想要的**感受**——好奇 → 亲手参与 → 惊喜揭晓，以及那种动态和交互的质感。**画面和点子必须是我们自己的**，不能出现"袖口 + 丝带 + 拉出手"这一类组合。
 
 ---
 
@@ -22,7 +24,7 @@
 1. **交互方向错了**：试着室做成了传统配置器——标签页（形 / 長さ / 色・質感 / アート）、按钮网格、一排"小指 / 薬指 / 中指…"按钮。用户要的是直接操作物体的 3D 交互，不是点按钮切换。
 2. **美甲不好看，不像市面上的美甲**：指甲是代码画的白色长条色块，没有凝胶的厚度和光泽；而且没对齐，小指和拇指的甲片浮在手指外面。
 3. **手不对**：底图里的手骨节粗、青筋明显、手掌宽，五指张开摊平在粗糙的洞石上，像 X 光片的摆法，不像女性的手，也没有美感。
-4. **首页没有钩子**：只是把品牌名压在一只模糊的手上，"揭纸"效果几乎看不出来。用户要的是"从袖口抽出缎带"这个能亲手参与的创意。
+4. **首页没有钩子**：只是把品牌名压在一只模糊的手上，"揭纸"效果几乎看不出来。用户要的是一个能亲手参与、带来好奇和惊喜的**原创**钩子。
 5. **风格不对**：燕麦米色 + 深可可 + 雾蓝，是中性的北欧 / Aesop 风。用户要的是**日本美容行业的女性向高级感**。
 6. **菜单区和 5 层构造区**：菜单还是"左文字右大图"的传统排版；5 层构造是一叠半透明的抽象片，和"能做哪些美甲"没有关系。
 
@@ -89,25 +91,38 @@
 
 ## 4. 页面结构和交互
 
-整体流程：**01 缎带 → 02 化妆台 → 03 チップ見本 → 04 美甲师与沙龙 → 05 カウンセリングカード → 页脚**
+整体流程：**01 花苞 → 02 化妆台 → 03 チップ見本 → 04 美甲师与沙龙 → 05 カウンセリングカード → 页脚**
 
 顶栏只保留 4 个入口：ネイルを選ぶ / デザイン / サロン / 相談・予約。
 
-### 01 首页钩子：引き出すリボン（拉出缎带）
+### 01 首页钩子：花びらが、ネイルになる（原创）
 
-**画面**：浅粉米色的墙前，一只象牙色粗花呢外套的袖口从画面上方垂下来，袖口钉着小珍珠扣。一条くすみローズ色的缎带从空袖口垂到画面下方。画面上的文字只有右下角一行「そっと、引いてみてください。」，旁边一个轻轻上下浮动的小箭头。
+**要给人的感受**：好奇（这是什么？）→ 亲手参与（是我在打开它）→ 惊喜揭晓（原来花瓣就是指甲）。
+
+**画面**：浅粉米色的空间正中，浮着一朵闭合的花苞。它由 15–20 片饱满有光泽的"花瓣"组成，颜色是半透明的乳白、裸粉和淡玫瑰色。这些花瓣其实就是美甲甲片：和 03 チップ見本用的是同一种 3D 甲片几何体和凝胶材质。花苞像呼吸一样轻轻起伏。画面上的文字只有一行「ひらいてみてください。」。
 
 **交互**：
-- 用户按住缎带下端往下拖：手机用手指往下滑，电脑用鼠标按住往下拖。滚轮和页面滚动也能推进，作为备用方式。
-- **拖动距离 → 播放进度（0–1）→ 显示对应的帧**：手跟着缎带从袖口里滑出来。这就是"拖拽驱动的帧序列"，直接复用现有 `ScrollSequence` 的帧引擎，只是把输入从滚动改成拖拽。
-- **手感**：拖动要有阻力，用阻尼曲线（例如 `progress = 1 - exp(-d / k)`），感觉像真的在拉布料。手指或鼠标抓着的缎带末梢，用一小段 2D 绳索物理来画（verlet 算法，8–12 个节点），让它自然摆动；接点是视频里缎带的末端，末端坐标每帧预先标好，存在 `hero-ribbon-track.json`。
-- **松手**：
-  - 进度 < 0.55：缓慢弹回原位。用 spring，但不能弹过头。
-  - 进度 ≥ 0.55：自动播完——手完全滑出，缎带在手指上系成蝴蝶结，美甲露出来。
-- **完成的瞬间**：一道很柔的光从指甲上扫过；手机端如果支持，就调用 `navigator.vibrate(12)`。接着出现品牌名 soū 和一句话（例：「指先に、ほどける季節を。」），下面两个入口：「ネイルを選ぶ」跳到 02，「相談する」跳到 05。
+- 在花苞上拖动（电脑用鼠标，手机用手指），方向不限。拖动的距离累积成"绽放进度"（0–1）。拖动要有阻力，用阻尼曲线（例如 `progress = 1 - exp(-d / k)`）。花瓣从外层到内层依次松开。
+- 松开的花瓣带物理效果脱落：轻微旋转，受重力和一点"风"的影响，像花瓣一样缓缓飘落，翻面时会反光。风向就是手指或鼠标划过的方向。
+- 花苞开到一半时，中心露出一只女性的手（真实照片），手指轻轻搭在缎面上，指甲还是素甲。
+- 松手：
+  - 进度 < 0.5：花瓣慢慢合拢回去。用 spring，但不能弹过头。
+  - 进度 ≥ 0.5：自动绽放到底。
+- **揭晓（高潮）**：最后 5 片花瓣不落下，而是在空中翻转、缩小，依次准确地落到 5 根手指的指甲上。落点用 02 化妆台校准好的指甲坐标。每落定一片，就在那个指甲遮罩里淡入真实照片里的美甲，同时一道柔光扫过；手机端如果支持，调用 `navigator.vibrate(8)`。到这里，观众才意识到：花瓣就是指甲。
+- 5 片都落定后，出现品牌名 soū 和一句话（例：「花びらが、指先に。」），下面两个入口：「ネイルを選ぶ」跳到 02，「相談する」跳到 05。
 - **第二次访问**：用 localStorage 记住，直接显示完成状态，角落放一个「もう一度」。
-- **兜底**：没有视频时，用首帧和尾帧交叉淡入淡出（但上线前必须有视频，见第 6 节）。开启 `prefers-reduced-motion` 时直接显示尾帧。
-- **键盘**：焦点在缎带上时，按 Enter 自动拉出。
+- **兜底**：开启 `prefers-reduced-motion`、或者没有 WebGL 时，直接显示完成状态的静态图。
+- **键盘**：焦点在花苞上时，按 Enter 自动绽放。
+
+**为什么选这个**：
+- **原创**：甲片和花瓣的形状本来就像（杏仁形、椭圆形），"花瓣变成指甲"是我们自己的视觉比喻，不借用任何广告。
+- **和日本女性向审美一致**：花、柔光、透明感。
+- **技术上复用**：花瓣 = 03 的 3D 甲片，落点 = 02 的指甲校准坐标，手 = 02 的同一张底图和变体照片。不需要 AI 视频。
+
+**备选方向**（如果用户想换，都保持"好奇 → 参与 → 揭晓"这个结构）：
+- **くもりガラス**：画面是一块起雾的玻璃，像泡完澡的浴室镜子，水珠缓缓流下。用户用手指或鼠标擦掉雾气，玻璃后面是一只轻贴在玻璃上的手，指甲刚做好。擦得越多越清楚，擦到一定面积，雾气整体散开。
+- **ミルクの水面**：一池乳粉色、像凝胶一样的液面。手指划过会泛起涟漪（WebGL 水波着色器）。划得越多，一只手就从液面下慢慢浮上来，指甲带着"ちゅるん"的水光。
+- **ボトルを回す**：一只巨大的甲油瓶。用户用画圈的手势拧开瓶盖，把刷子拉出来，一滴甲油落下，在手上晕开成美甲。
 
 ### 02 化妆台：くるくるパレット（转动甲油瓶，换美甲）—— 卖点
 
@@ -188,7 +203,7 @@ FAQ（卸甲费用、能保持多久、预约变更和取消、支付方式）�
 | 07 | うる艶ボルドー | deep glossy bordeaux one-color, medium round | ワンカラー |
 | 08 | シアーグレージュ | sheer greige one-color, glossy, short oval | ワンカラー |
 | 09 | オーロラパール | sheer white with iridescent aurora powder (pearly pink-blue shimmer), short oval | オーロラ |
-| 10 | リボンパール | sheer pink base; ring finger has a tiny 3D white ribbon bow charm and two small pearls | パーツ（和首页缎带呼应） |
+| 10 | パールパーツ | sheer pink base; ring finger has three small pearls and a tiny gold stud near the cuticle | パーツ |
 | 11 | べっ甲アクセント | sheer beige base; two accent nails with tortoiseshell pattern and a thin gold line | ニュアンス |
 | 12 | ラメグラデーション | sheer nude with a fine champagne-gold glitter gradient from the tip | グラデーション |
 
@@ -200,24 +215,10 @@ FAQ（卸甲费用、能保持多久、预约变更和取消、支付方式）�
 
 **原则**：先做素材，用户确认好看以后再写代码。素材不好看，代码做得再好也没用。
 
-### 6.1 首页缎带（3 个文件）
-
-**hero-first.jpg（首帧）**
-```text
-Photorealistic beauty campaign still, 16:9, eye level, perfectly centered. The cuff of an ivory tweed jacket sleeve with small pearl buttons hangs into the frame from the top center, against a soft blush-beige plaster wall. A dusty-rose satin ribbon, about 2 cm wide, hangs straight down out of the empty cuff to the bottom edge of the frame. No hand visible. Keep the subject in the middle third with plain wall on both sides. Soft diffused high-key window light, gentle shadows, delicate and airy Japanese beauty aesthetic. No text, no logo, no watermark.
-```
-
-**hero-last.jpg（尾帧，把首帧一起上传，用编辑模式生成）**
-```text
-Keep image 1 identical: same camera, framing, wall, sleeve and lighting. Now a slender young Japanese woman's hand has slid out of the sleeve, hanging down gracefully, fingers relaxed and slightly curved, back of the hand facing the camera. Delicate slim fingers, small knuckles, smooth luminous skin with a soft pink undertone, no visible veins. Nails: short soft-oval Japanese gel manicure in sheer milky pink with a very glossy "churun" finish; the ring finger has a tiny 3D white ribbon charm and two small pearls. The dusty-rose satin ribbon is tied in a small neat bow around her middle and ring fingers, its ends hanging down. A thin gold chain bracelet. Exactly five fingers, realistic proportions. No text, no watermark.
-```
-
-**hero.mp4（Veo 或可灵的首尾帧模式：首帧 = hero-first，尾帧 = hero-last）**
-```text
-Locked-off static camera. Absolutely no camera movement, no zoom, no cuts, no change in lighting or background. The dusty-rose ribbon is slowly pulled downward by an unseen force; following the ribbon, a slender woman's hand gradually slides out of the tweed sleeve, fingertips first, revealing her glossy manicure; the ribbon wraps around her middle and ring fingers and ties itself into a small bow. Slow, smooth, continuous motion at a constant speed. Calm, elegant, photorealistic. 5 seconds.
-```
-
-**hero-ribbon-track.json**：在 `?calibrate` 模式下，每隔 10 帧点一下缎带末端的位置，中间的帧自动插值。
+### 6.1 首页花苞（不需要视频）
+- **手**：直接用 6.2 的 `hand-base.jpg`（素甲），揭晓后的美甲用其中一张变体。默认用 No.01 ちゅるんミルクベージュ 或 No.05 極細フレンチ。
+- **花瓣**：由代码生成（3D 甲片 + 凝胶材质），颜色从 12 款里取 3–4 种柔和的颜色。
+- **首屏静态图**：3D 加载完之前先显示它，同时作为 LCP 图片。可以按 6.4「01 花苞」的效果参考图生成，也可以直接从 3D 画面导出一帧。
 
 ### 6.2 化妆台的手（1 张底图 + 12 张变体）
 
@@ -238,6 +239,11 @@ A single gel press-on nail tip, [shape], designed as: [design description]. Phot
 生成后抠图，作为 3D 甲片的贴图。
 
 ### 6.4 效果参考图（写代码前先生成，用来统一"目标长什么样"）
+**01 花苞**
+```text
+Photorealistic concept visual for a luxury Japanese nail salon website hero: a closed flower bud floating in a soft blush-beige space, its petals made of glossy translucent gel nail tips in milky white, nude pink and pale rose, a few petals drifting away; behind it, softly out of focus, a slender woman's hand resting on blush satin. High-key soft light, airy, elegant, feminine. No text.
+```
+
 **02 化妆台**
 ```text
 Photorealistic concept visual for a luxury Japanese nail salon website: in the upper half, a slender woman's elegant hand rests on a blush satin cushion, showing a glossy lavender magnetic gel manicure; in the lower half, a round mirrored vanity tray holds a ring of twelve small luxury glass nail polish bottles with gold caps in soft pastel and nude colors, the front bottle slightly raised. Soft pink-beige palette, high-key light, airy and elegant. No UI text.
@@ -261,10 +267,10 @@ Photorealistic flat lay: a thick cream-colored counseling card with a thin gold 
 ## 7. 技术要求
 
 - 在现有工程上改，新增依赖：`three`、`@react-three/fiber`、`@react-three/drei`、`@use-gesture/react`。
-- 每个 3D 区块单独懒加载（`React.lazy` + `IntersectionObserver`，进入视口前一屏才开始加载）。首屏只加载缎带需要的代码。
+- 每个 3D 区块单独懒加载（`React.lazy` + `IntersectionObserver`，进入视口前一屏才开始加载）。首屏先显示花苞的静态图，3D 花苞的代码随后加载，加载完再无缝替换。
 - 性能目标：手机 4G 下 LCP ≤ 2.5s；3D 区块在中端安卓手机上 ≥ 50fps；手机 dpr 上限 1.5；首屏 JS（gzip）≤ 200KB，3D 代码块不计入。
 - 降级：没有 WebGL、低端设备或开启 `prefers-reduced-motion` 时，切换到 2D 版本——同样的照片和切换效果，只是没有 3D 托盘和样品环。
-- 可访问性：所有拖拽交互都要有键盘替代（← → 切换瓶子、Enter 选中；首页缎带按 Enter 自动拉出）。
+- 可访问性：所有拖拽交互都要有键盘替代（← → 切换瓶子、Enter 选中；首页花苞按 Enter 自动绽放）。
 - SEO / GEO：菜单、价格、FAQ、店铺信息必须以文字形式出现在 HTML 里；JSON-LD 包括 `NailSalon` 和 `FAQPage`。
 - 删除：
   - 用 SVG 画指甲本体的展示代码（`NailSvgLayer`、`nailGeometry` 用于展示的部分）。只保留マグネット / パール高光叠加需要的那部分。
@@ -276,7 +282,8 @@ Photorealistic flat lay: a thick cream-colored counseling card with a thin gold 
 
 ## 8. 验收标准
 
-- **首页**：拖缎带能把手拉出来；松手后弹回或自动拉完，手感自然；手机和电脑都能操作。
+- **首页**：拖动能让花苞绽开；松手后合拢或自动绽放，手感自然；最后 5 片花瓣准确落到 5 个指甲上；手机和电脑都能操作。
+- **原创**：全站没有照搬任何已知广告的画面或点子，没有"袖口 + 丝带 + 拉出手"这一类组合。
 - **化妆台**：拖托盘转瓶子流畅；美甲切换后是真实照片、对齐、好看；12 款都像日本沙龙的真实款式。
 - **チップ見本**：能旋转、能点开、能看到价格和时间、能跳到咨询。
 - **咨询卡**：一题一页，最后生成 LINE / Instagram 消息，并附带设计链接。
@@ -287,6 +294,6 @@ Photorealistic flat lay: a thick cream-colored counseling card with a thin gold 
 
 ## 9. 交付顺序（建议分 3 次提交）
 
-1. **素材**：先生成化妆台的手（底图 + 12 张变体）和首页视频，发给用户确认好看，再开始写代码。
-2. **代码**：首页缎带 + 化妆台。
+1. **素材**：先生成化妆台的手（底图 + 12 张变体）和效果参考图，发给用户确认好看，再开始写代码。
+2. **代码**：首页花苞 + 化妆台。
 3. **代码**：チップ見本 + 咨询卡 + 全站风格统一。

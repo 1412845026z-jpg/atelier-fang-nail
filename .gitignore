@@ -5,3 +5,6 @@ dist/
 .env
 .env.*
 *.local
+
+# local tools (Real-ESRGAN binary etc.)
+.tools/

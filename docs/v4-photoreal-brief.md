@@ -6,6 +6,13 @@
 > 3. 线上 `b8c4078` 的实测结果
 >
 > **优先级：用户 > Grok 修改单 > 旧需求书（`docs/redesign-3d-brief.md`，已作废）。**
+>
+> **2026-11-22 23 点更新**：按 Grok 的 v4 补充规格（`docs/review-grok-v4-self-design.md`）修改了以下内容：
+> - 舞台从"粉色缎面 + 珍珠"改成**哑光日式台面**（第 4.2 节）。
+> - セルフデザイン 改以 Grok 的补充规格为准（第 3 节镜头 6）。
+> - 新增「母版长图」，用来保证从花到手是同一个空间（第 4.3 节）。
+>
+> 第一批素材的审核意见见 `docs/v4-assets-review/REVIEW.md`。
 > Grok 修改单里提到的 `/workspace/atelier-ui-guide.md` 不在本仓库里。如果有，请把它放到 `docs/` 下；没有的话，以本文件为准。
 
 ---
@@ -45,10 +52,10 @@
 
 ## 3. 一镜到底的分镜（全部写实，滚动驱动）
 
-整站是一条连续的镜头，发生在同一个世界里：**同一块浅粉色缎面、同一只手、同一束从左上方来的窗光、同一个色温**。
+整站是一条连续的镜头，发生在同一个世界里：**同一张哑光台面（米白亚麻、和纸、浅木或石材）、同一只手、同一束从左侧来的柔和窗光、同一个色温**。
 
 ### 镜头 1 · 花（首屏）
-- 画面：柔光里，一朵写实的淡粉色芍药（或毛茛）半开着，花瓣上有细微的脉络和通透感。
+- 画面：柔和的侧光里，一只小陶瓶插着一枝写实的淡粉色花（芍药、毛茛或雪柳，选一种），立在台面上，花瓣有细微的脉络和通透感。这个陶瓶和后面的手在**同一张台面上**（见 4.3 的母版长图）。
 - 动态：花在轻轻"呼吸"，花瓣微微颤动，光线缓慢流动。用一段 4 秒的写实视频，正放和倒放交替，做成无缝循环。
 - 文字：只有「ひらいてみてください。」（Grok 定稿）。
 - LCP：首屏先显示这一帧的静态图。
@@ -58,7 +65,7 @@
 - 镜头跟着花瓣往下移。
 
 ### 镜头 3 · 落到手上（40 → 70%）
-- 视频接着走：镜头继续下移，来到缎面上一只女性的手。5 片花瓣轻轻落下，**每一片正好落在一个指甲上**。
+- 视频接着走：镜头继续下移，来到台面上一只女性的手。5 片花瓣轻轻落下，**每一片正好落在一个指甲上**。
 
 ### 镜头 4 · 花瓣变成美甲（70 → 100%）
 - 视频：指甲上的花瓣慢慢变软、融化，颜色沉进指甲里，变成饱满有光泽的短凝胶甲（ちゅるん），最后一道柔光扫过。
@@ -66,24 +73,25 @@
 - 这里的美甲就是定番里和花瓣同色的那一款（くすみピンク，或者新增一款「桜ちゅるん」）。
 
 ### 镜头 5 · 甲油瓶出现（定番，12 款）
-- 镜头 4 的最后一帧就是"舞台底图"：手 + 缎面。继续滚动或点「ネイルを選ぶ」后，一排**写实的甲油瓶**立在缎面上，在手的前方从景深里浮现：由虚到实，轻轻升起，依次错开出现。
+- 镜头 4 的最后一帧就是"舞台底图"：手 + 台面。继续滚动或点「ネイルを選ぶ」后，一排**写实的甲油瓶**立在台面上，在手的前方从景深里浮现：由虚到实，轻轻升起，依次错开出现。
 - **左右滑动这排瓶子**（手机用手指，电脑用鼠标拖或触控板横滑），带惯性，停下时自动吸附到最近的一瓶。
 - **正中那瓶在焦点上**：清晰、略大、轻轻抬起。越往两边越虚（模糊 2 → 8px），也越暗，像相机的追焦。
 - 停稳后，手上的美甲切换成这一款：在指甲遮罩里，新款式像甲油一样从甲根流到甲尖（5 根手指依次进行，间隔 60ms），然后一道光扫过指甲。
 - 瓶子下方用小字显示款名、价格、时间（允许的文字）。
 - 轻点指甲：镜头推近到指甲特写，看清光泽和细节，然后进入镜头 7（设计卡）。
 
-### 镜头 6 · セルフデザイン（自己设计）
-- 入口：瓶子那一排的最后，放一只空的透明瓶，小标签写「セルフデザイン」。
-- 镜头不离开这只手。4 个步骤，**每一步都是"一排写实的东西，左右滑动来选"**，和甲油瓶的操作完全一样：
-  1. **甲型和长度**：一排写实的甲片（3 种形状 × 2 种长度，共 6 片）→ 手上的指甲变成对应的形状和长度。
-  2. **颜色**：一排写实的纯色甲油瓶（16–20 色，每色都有名字）。和谐的颜色排在前面，不和谐的颜色变淡（Grok 要求）。
-  3. **质感**：一排写实的小物件：透明亮油瓶（グロス）、磨砂瓶（マット）、带磁棒的猫眼瓶（マグネット）、细闪粉的小玻璃罐（ラメ）、珍珠粉罐（パール）、极光片罐（オーロラ）。
-  4. **点缀**：一只小瓷碟里放着写实的饰品：珍珠、金色铆钉、小水钻、金箔。选中一种后，轻点想放的指甲就会贴上（每根指甲最多 2 个）。
-- 选完一步，自动进入下一步。往回滑或者轻点上一步的缩略图，可以返回修改。
+### 镜头 6 · セルフデザイン（自己设计）—— 以 `docs/review-grok-v4-self-design.md` 为准
+- **定位**：让客人用中档的价格，"参与一次高端设计的过程"。不咨询也能完整玩完；玩完有了投入感，自然想要 オーダーメイド。
+- **入口**：瓶子那一排的最后，放一只空的透明瓶（素材 `clear-self-design`）。
+- **同一部片子的下半场**：同一只手、同一个台面、同一束光，从定番无缝接进来，不切走、不跳页。甲面从素甲开始，每做一个选择，就当场落在这只手上；镜头随之推近、对焦。
+- **空瓶是主角，也是进度条**：每选完一步，瓶里多一层。用"瓶子被慢慢装满"表达进度，不出现「STEP 1/6」之类的文字。轻点瓶中的某一层，镜头退回到那一步，可以修改。
+- **顺序**：甲型（3 种）→ 长度（3 种）→ 底色（16–20 色，有日文名，偏日式くすみ和透感）→ 技法（5–6 种：ワンカラー、フレンチ、グラデーション、マグネット、ニュアンス、ミラー）→ 点缀（4–5 种：パール、ラメ、ストーン、ゴールドライン、なし）→ 设计卡。选完一项，下一项立刻自然浮现。
+- **选项怎么呈现**：由实现者决定，可以是"一排写实的小物件，左右滑动"（和甲油瓶操作一致），也可以是安静的文字选项。但必须遵守 Grok 的禁令：不出现捏、刷、镊子、转盘、拖拽涂色、得分、音效奖励等小游戏感操作。
+- **有限的自由**：推荐的组合更亮，搭不上的选项自动变淡，客人挑不出难看的组合。
+- **收尾**：瓶子封口 → 镜头拉远 → 变成设计卡（自动生成诗性款名、预计价格、预计时长、卡号）。
 
 ### 镜头 7 · 设计卡
-- 镜头稍微后退。在同一块缎面上，手旁边滑进来一张**写实的厚纸卡片**：奶油色，带细细的烫金边。
+- 镜头稍微后退。在同一张台面上，手旁边滑进来一张**写实的厚纸卡片**：奶油色，带细细的烫金边。
 - 卡片上的内容由代码叠加：指甲特写、番号、设计名、价格、时间。
 - 卡片上的操作：保存 / 分享 / 用 LINE 发送。导出一张 1080×1350 的图片。
 
@@ -103,59 +111,75 @@
 - 生成后的处理（对齐、做遮罩、抠图、拆帧、压缩）全部用开源工具在本地完成，见 4.5。
 
 ### 4.2 全站统一的"世界设定"（每条提示词都要带上）
+**改动（Grok v4 补充规格）**：第一版写的是粉色缎面 + 珍珠，这更像欧美或中式婚礼、珠宝广告的"名媛风"，甜、亮、满。日本高端沙龙作品图的气质是素、静、留白。所以：
+- 底材用哑光材质：米白亚麻、和纸、浅木、石材之一或组合。**禁止反光缎面。**
+- 光是柔和的窗边侧光，有自然阴影。**禁止棚拍式均匀打光。**
+- 每个画面最多 1–2 样道具（一两片花瓣、一枝雪柳或小花、一只陶器）。**去掉珍珠串。**
+- 同一只手贯穿全片。戒指可以留也可以去，但全片统一。
+
 ```text
-WORLD: soft blush-pink silk satin surface, gentle diffused window light from the upper left, warm 5000K, high-key, shallow depth of field, shot on a 100mm macro lens, photorealistic commercial beauty photography, Japanese high-end nail salon aesthetic, no text, no logo, no watermark.
+WORLD: matte off-white linen and pale washi paper on a light wood table, soft natural side light from a window on the left with gentle natural shadows, calm and quiet, generous negative space, at most one or two small props, warm 5000K, shallow depth of field, shot on a 100mm lens, photorealistic, the portfolio photography style of a high-end Japanese nail salon, no satin, no pearls, no text, no logo, no watermark.
 HAND: a slender young Japanese woman's hand, long delicate fingers, small knuckles, smooth luminous skin with a soft pink undertone, natural fine skin texture, no visible veins, realistic proportions, exactly five fingers.
 NAILS: professional Japanese gel manicure, short to medium length, soft oval or round shape, thick smooth glossy "churun" surface, clean cuticle line.
 ```
 
 ### 4.3 生成顺序（顺序决定能不能对齐）
-**先出"舞台底图"，其他图都在它的基础上编辑出来**，这样所有图都对齐。
+**先出"舞台底图"，其他图都在它的基础上编辑出来**，这样所有图都对齐。下载时选 **4K**（至少 2K）。第一批素材只有 1376×768，镜头推近到指甲时会糊。
 
-1. **舞台底图 `plate.jpg`**（4K，16:9；手比现在大，占画面约 55%，五个指甲都清楚）
+0. **母版长图 `master.jpg`**（竖版，约 9:24，例如 2160×5760）——保证"花 → 手"是同一个空间
+   先出 `plate.jpg`，再用扩图（向上扩展画布）把画面往上延伸：手的后方、同一张台面上，立着一只小陶瓶，插着一枝淡粉色的花。
+   ```text
+   Extend this photo upward, keeping everything already in the frame exactly the same. Above and behind the hand, on the same table, a small matte ceramic vase holds a single pale blush flower (peony / ranunculus / snowbell branch). Same surface, same side window light from the left, same color temperature, calm negative space between the vase and the hand.
+   ```
+   然后：`flower.jpg` = 长图的上部裁切，`plate.jpg` = 下部裁切（像素完全一致）。视频 A、B 的首尾帧都从长图里裁，镜头"往下摇"就是在同一个空间里移动，不会跳色、跳光。
+
+1. **舞台底图 `plate.jpg`**（4K，16:9；手占画面约 55%，五个指甲都清楚）
 ```text
-[WORLD] [HAND] Her left hand rests gracefully on the satin, back of the hand facing the camera, fingers gently extended and slightly fanned, all five nails clearly visible and not overlapping, shot from about 60 degrees above. A thin gold ring on the index finger. [NAILS] in sheer dusty blush pink. A few out-of-focus white ranunculus petals and a strand of pearls at the far edge.
+[WORLD] [HAND] Her left hand rests naturally and relaxed on the linen, back of the hand facing the camera, fingers softly curved and slightly apart, all five nails clearly visible and not overlapping, shot from about 60 degrees above. A thin gold ring on the ring finger. [NAILS] in sheer dusty blush pink. One small prop at most at the far edge (a single petal or a small ceramic dish).
 ```
 2. **12 款定番变体**（上传 `plate.jpg`，每款编辑一次）
 ```text
 Keep this photo exactly the same: same hand, pose, fingers, skin, ring, lighting, background and framing. Change ONLY the nails to: [design]. [NAILS] Do not change anything else.
 ```
    12 款沿用 `docs/redesign-3d-brief.md` 第 5 节的名称和描述，但要**拉开差别**：至少 3 款深色或高饱和色，至少 4 款带明显的技法（マグネット、ミラーフレンチ、ニュアンス箔、べっ甲、パール）。
+   **验收**：12 张缩到 200px 宽排在一起，每张都能一眼认出来（尤其是 01、02、05、10、12）。
 3. **花瓣落在指甲上 `petals-on-nails.jpg`**（上传 `plate.jpg` 编辑）
 ```text
-Keep this photo exactly the same. Change ONLY this: five real pale blush peony petals have softly landed on the hand, one petal resting on each fingernail and covering it, slightly curled, translucent, with fine veins. Do not change anything else.
+Keep this photo exactly the same. Change ONLY this: on each of the five fingernails rests one real pale blush flower petal, trimmed to exactly the size and short oval shape of the nail, gently curved to follow the nail's curvature, its edge slightly translucent, with a very fine contact shadow where it meets the nail. No petal extends beyond the nail onto the fingertip or the sides of the finger. It should look as if the petal is becoming the nail, not like a sticker. Do not change anything else.
 ```
-4. **花 `flower.jpg`**（16:9）
-```text
-[WORLD] A single real pale blush peony, half open, floating in the center of the frame on a short stem, dewy translucent petals with fine veins, the same blush satin softly out of focus below. Calm, airy, elegant.
-```
+4. **花 `flower.jpg`**：从母版长图的上部裁切（见第 0 步），不要单独生成。
 5. **视频 A：花开 → 花瓣飘落**（图生视频，首帧 = `flower.jpg`）
 ```text
-Slow, elegant, photorealistic. The peony slowly blooms fully open; several petals gently detach and drift downward through the air; the camera smoothly tilts down, following the falling petals. Soft window light, no cuts. 6 seconds.
+Slow, elegant, photorealistic. The flower in the ceramic vase slowly blooms fully open; several petals gently detach and drift downward through the air; the camera smoothly tilts down, following the falling petals. Soft side window light, no cuts. 6 seconds.
 ```
 6. **视频 B：花瓣落到手上**（首尾帧模式：首帧 = 视频 A 的最后一帧，尾帧 = `petals-on-nails.jpg`）
 ```text
-The camera continues to tilt down, following the drifting petals, and arrives at a woman's hand resting on blush satin; each petal floats down and settles softly onto one fingernail. Smooth continuous motion, constant speed, photorealistic, no cuts. 5 seconds.
+The camera continues to tilt down, following the drifting petals, and arrives at a woman's hand resting on the linen; each petal floats down and settles softly onto one fingernail. Smooth continuous motion, constant speed, photorealistic, no cuts. 5 seconds.
 ```
+   视频由用户本人在 Google Flow 或可灵里用首尾帧生成，再放进仓库。不配置 API Key 自动调用。
 7. **视频 C：花瓣变成美甲**（首尾帧模式：首帧 = `petals-on-nails.jpg`，尾帧 = `plate.jpg`）
 ```text
 Static camera, no movement. The petals resting on the fingernails slowly soften and melt into a smooth glossy gel manicure, their color sinking into the nails; finally a soft glint of light sweeps across the nails. Photorealistic, calm. 4 seconds.
 ```
 8. **甲油瓶**：先出一只"标准瓶"，再用编辑模式只换颜色。这样所有瓶子形状、光线完全一致。
 ```text
-[WORLD] A small luxury nail polish bottle, 10 ml, softly rounded square thick clear glass, smooth blush ceramic cap with a thin gold ring, filled with sheer dusty pink polish, standing upright on the satin, photographed straight on at eye level, soft contact shadow, generous empty space around. Product photography.
+[WORLD] A small luxury nail polish bottle, 10 ml, softly rounded square thick clear glass, smooth blush ceramic cap with a thin gold ring, filled with sheer dusty pink polish, standing upright on the same matte linen and wood surface, photographed straight on at eye level, light from the same left-side window as the hand photo, soft natural contact shadow, generous empty space around.
 ```
+   第一批瓶子的外形和质感都很好，**保留瓶型**，只把背景换成哑光台面、光线方向和手的照片对齐，再按款换色。每只瓶子还要交付一张抠好的透明背景版本。
    换色时用：`Keep this photo exactly the same. Change ONLY the polish inside the bottle to: [color / glitter / magnet shimmer]. Do not change anything else.`
    定番 12 瓶对应 12 款；セルフデザイン 的颜色瓶 16–20 只。
-9. **セルフデザイン 的甲型素材**：用 `plate.jpg` 编辑出 6 张"指甲是不透明乳白色、形状和长度各不相同"的图（3 种形状 × ショート / ミディアム）。这些图用来提取指甲遮罩和明暗，之后在代码里按颜色重新着色（见 4.5）。
-10. **质感物件、点缀饰品**：每样单独生成一张（同一套世界设定，正面拍），之后抠图。
-11. **设计卡**：同一块缎面上放一张空白厚纸卡（奶油色，细烫金边），没有任何文字。文字由代码叠加，保证清晰。
+9. **セルフデザイン 的甲型素材**：用 `plate.jpg` 编辑出 9 张"指甲是不透明乳白色、形状和长度各不相同"的图（3 种甲型 × 3 种长度）。这些图用来提取指甲遮罩和明暗，之后在代码里按颜色重新着色（见 4.5）。
+10. **空瓶装满的分层**：另出一张同角度、"瓶里装满中性乳白液体"的空瓶照片，作为瓶内液体的明暗参考；每一层的颜色由代码按同样的方法重新着色。
+11. **技法纹理、点缀饰品**：每样单独生成一张（同一套世界设定，正面拍），之后抠图。
+12. **设计卡**：用 `plate.jpg` 编辑，在手的旁边放一张空白厚纸卡（奶油色，细烫金边），没有任何文字。这样卡片和手在同一个空间、同一束光里。文字由代码叠加，保证清晰。
 
 ### 4.4 验收素材的标准
 - 把素材和一张真实的产品照片并排放，看不出哪张是生成的。
-- 所有图的光线方向、色温、缎面颜色一致。
-- 手指数量、关节、指甲形状没有变形。手是纤细的女性手。
-- 12 款定番一眼能分出来。
+- 所有图的光线方向、色温、台面一致。哑光台面，没有缎面，没有珍珠串，每个画面道具不超过 2 样。
+- 手指数量、关节、指甲形状没有变形。手是纤细的女性手，全片是同一只手。
+- 12 款定番缩到 200px 宽仍能一眼分出来。
+- 分辨率：手部图和母版长图是 4K（至少 2K）。
+- 对齐：变体图和 `plate.jpg` 做差，只有指甲区域不同，手的轮廓没有错位（见 4.5 的 OpenCV 对齐）。
 
 ### 4.5 开源工具（本地、免费，Claude 可以帮忙搭好脚本）
 | 工具 | 用途 |

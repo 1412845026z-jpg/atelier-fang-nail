@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+:root {
+  --bg-oat: #F2EEE8;
+  --ink-cocoa: #241E1A;
+  --ink-muted: #8A8178;
+  --accent-ribbon: #A7C1D9;
+  --bg-dark: #1C1917;
+  --hairline: rgba(36, 30, 26, 0.15);
+  --hairline-dark: rgba(242, 238, 232, 0.16);
+
+  --font-serif: "Instrument Serif", "Shippori Mincho", "Hiragino Mincho ProN", Georgia, serif;
+  --font-sans: "Geist", "Noto Sans JP", "Hiragino Sans", -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--bg-oat);
+  color: var(--ink-cocoa);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-oat);
+  color: var(--ink-cocoa);
+  overflow-x: clip;
+  line-height: 1.55;
+}
+
+/* Subtle 3% opacity editorial film grain texture across entire viewport */
+.film-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+.font-editorial {
+  font-family: var(--font-serif);
+  font-weight: 400;
+}
+
+.font-body {
+  font-family: var(--font-sans);
+}
+
+.font-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hairline-t {
+  border-top: 1px solid var(--hairline);
+}
+
+.hairline-b {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.hairline-all {
+  border: 1px solid var(--hairline);
+}
+
+/* Gentle levitation for active center Coverflow card (2.5s, 6px) */
+@keyframes coverflowFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float-center {
+  animation: coverflowFloat 2.5s ease-in-out infinite;
+}
+
+/* Pure visual gesture cue: subtle gliding scrub dot (replaces text drag instructions) */
+@keyframes scrubCue {
+  0%, 100% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(28px);
+  }
+}
+
+.animate-scrub-cue {
+  animation: scrubCue 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Pure visual scroll line pulse (replaces text scroll explanations) */
+@keyframes scrollTick {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+    opacity: 0.9;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+    opacity: 1;
+  }
+  51% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+    opacity: 0.2;
+  }
+}
+
+.animate-scroll-tick {
+  animation: scrollTick 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-center,
+  .animate-scrub-cue,
+  .animate-scroll-tick {
+    animation: none !important;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (pointer: fine) and (min-width: 1024px) {
+  body.has-custom-cursor,
+  body.has-custom-cursor a,
+  body.has-custom-cursor button {
+    cursor: none !important;
+  }
+}
+
+:focus-visible {
+  outline: 1.5px solid var(--accent-ribbon);
+  outline-offset: 2px;
+}

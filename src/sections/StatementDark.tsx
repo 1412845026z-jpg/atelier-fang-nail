@@ -64,7 +64,6 @@ export const StatementDark: React.FC<StatementDarkProps> = ({
     return () => window.cancelAnimationFrame(rafId);
   }, [reducedMotion, scrollVelocityRef]);
 
-  // Grounded wrist pivot: subtle parallax lift + -3.5deg -> +3.5deg gentle sway from bottom anchor
   useEffect(() => {
     if (reducedMotion) return;
     const sec = sectionRef.current;
@@ -100,10 +99,9 @@ export const StatementDark: React.FC<StatementDarkProps> = ({
       id="statement"
       ref={sectionRef}
       data-theme="dark"
-      className="relative w-full overflow-hidden pt-24 sm:pt-32 pb-24 sm:pb-32"
+      className="relative z-10 w-full overflow-hidden pt-20 sm:pt-28 pb-20 sm:pb-28"
       style={{ backgroundColor: '#1C1917', color: '#F2EEE8' }}
     >
-      {/* Marquee stage with bottom-anchored hand emerging cleanly from the lower hairline (never floating severed wrist) */}
       <div
         className="relative w-full min-h-[340px] sm:min-h-[440px] lg:min-h-[520px] flex items-center overflow-hidden select-none"
         style={{ borderBottom: '1px solid rgba(242, 238, 232, 0.14)' }}
@@ -138,7 +136,6 @@ export const StatementDark: React.FC<StatementDarkProps> = ({
           </span>
         </div>
 
-        {/* Flush bottom-anchored transparent hand cutout */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-center px-6">
           <div
             ref={cutoutWrapRef}
@@ -150,6 +147,9 @@ export const StatementDark: React.FC<StatementDarkProps> = ({
           >
             <MediaImage
               src={SITE_CONFIG.media.statementCutout}
+              smallWidth={440}
+              largeWidth={760}
+              sizes="(max-width: 768px) 220px, 365px"
               alt={SITE_CONFIG.brandName}
               dark={true}
               className="w-full h-full object-contain object-bottom"
@@ -159,7 +159,6 @@ export const StatementDark: React.FC<StatementDarkProps> = ({
         </div>
       </div>
 
-      {/* Three stark hairline studio standards (zero cards, zero icons, zero prose) */}
       <div className="mt-14 sm:mt-20 px-5 sm:px-8 lg:px-12 grid grid-cols-12">
         <div className="col-span-12 lg:col-span-8 lg:col-start-3">
           {SITE_CONFIG.statement.vows.map((vow, idx) => (
@@ -177,7 +176,7 @@ export const StatementDark: React.FC<StatementDarkProps> = ({
                 0{idx + 1}
               </span>
               <p
-                className="font-editorial m-0 text-[24px] sm:text-[34px] lg:text-[40px] leading-tight text-right"
+                className="font-editorial jp-heading m-0 text-[24px] sm:text-[34px] lg:text-[40px] leading-tight text-right"
                 style={{ color: '#F2EEE8' }}
               >
                 {vow[lang]}

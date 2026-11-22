@@ -1,10 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Lang, SITE_CONFIG } from '../config';
+import { NailDesignState } from '../types/nail';
+import {
+  buildInstagramDmUrl,
+  buildLineOaUrl,
+  buildReservationMessage,
+  buildShareableDesignUrl,
+  copyTextToClipboard,
+  estimateDesign,
+  formatYen,
+} from '../utils/designCodec';
+import { buildNailControlPoints, controlPointsToPathD } from '../utils/nailGeometry';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface BookingSectionProps {
   lang: Lang;
-  prefilledNote?: string;
-  prefilledServiceId?: string;
+  attachedDesign: NailDesignState | null;
+  attachedServiceId?: string | null;
+  onEditDesign: () => void;
 }
 
 interface DayCell {
@@ -35,11 +51,35 @@ function toIsoDate(d: Date): string {
 
 export const BookingSection: React.FC<BookingSectionProps> = ({
   lang,
-  prefilledNote = '',
-  prefilledServiceId = '',
+  attachedDesign,
+  attachedServiceId = null,
+  onEditDesign,
 }) => {
   const services = SITE_CONFIG.services;
   const { daysAhead, closedWeekdays, timeSlots } = SITE_CONFIG.booking;
+
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const [vellumSlid, setVellumSlid] = useState(false);
+
+  // Subtle 2nd (and final) frosted-vellum sheet glide on first arrival at Booking
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) {
+      setVellumSlid(true);
+      return;
+    }
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const trigger = ScrollTrigger.create({
+      trigger: el,
+      start: 'top 78%',
+      once: true,
+      onEnter: () => setVellumSlid(true),
+    });
+
+    return () => trigger.kill();
+  }, []);
 
   const { dayCells, leadingBlanks } = useMemo(() => {
     const start = new Date();
@@ -65,99 +105,137 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
     return { dayCells: cells, leadingBlanks: firstCol };
   }, [daysAhead, closedWeekdays]);
 
-  const firstOpenDay = useMemo(
-    () => dayCells.find((c) => !c.isClosed) || dayCells[0],
-    [dayCells]
-  );
-
+  // All 3 fields strictly default to null ("未選択 / Not selected")
   const [step, setStep] = useState(0);
-  const [selectedServiceId, setSelectedServiceId] = useState(services[0].id);
-  const [selectedIso, setSelectedIso] = useState(firstOpenDay.iso);
-  const [selectedTime, setSelectedTime] = useState(timeSlots[1] || timeSlots[0]);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedIso, setSelectedIso] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestNote, setGuestNote] = useState('');
   const [copied, setCopied] = useState(false);
+  const [igNotice, setIgNotice] = useState(false);
 
+  // Sync only when explicitly pushed from Services or Try-on Studio ("このデザインで予約")
   useEffect(() => {
-    if (prefilledNote) {
-      setGuestNote(prefilledNote);
+    if (attachedServiceId) {
+      setSelectedServiceId(attachedServiceId);
+      setStep(0);
     }
-  }, [prefilledNote]);
+  }, [attachedServiceId]);
 
-  useEffect(() => {
-    if (prefilledServiceId) {
-      setSelectedServiceId(prefilledServiceId);
-      setStep(1);
-    }
-  }, [prefilledServiceId]);
+  const designEstimate = useMemo(
+    () => (attachedDesign ? estimateDesign(attachedDesign) : null),
+    [attachedDesign]
+  );
 
-  const selectedService =
-    services.find((s) => s.id === selectedServiceId) || services[0];
-  const selectedDay =
-    dayCells.find((d) => d.iso === selectedIso) || firstOpenDay;
+  const selectedService = selectedServiceId
+    ? services.find((s) => s.id === selectedServiceId) || null
+    : null;
+
+  const selectedDay = selectedIso
+    ? dayCells.find((d) => d.iso === selectedIso) || null
+    : null;
 
   const formattedDate = useMemo(() => {
+    if (!selectedDay) return '';
     const wd = WEEKDAY_NAMES_FULL[lang][selectedDay.weekday];
     if (lang === 'ja') {
-      return `${selectedDay.monthNum}/${selectedDay.dayNum} (${wd})`;
+      return `${selectedDay.monthNum}月${selectedDay.dayNum}日(${wd})`;
     }
     const monthShort = selectedDay.date.toLocaleString('en-US', { month: 'short' });
     return `${wd}, ${monthShort} ${selectedDay.dayNum}`;
   }, [lang, selectedDay]);
 
-  const bookingMessage = useMemo(() => {
-    const srvName = selectedService.title[lang];
-    const nameStr = guestName.trim() || '__';
-    const phoneStr = guestPhone.trim() || '__';
-    const noteTrim = guestNote.trim();
+  const designUrl = useMemo(
+    () => (attachedDesign ? buildShareableDesignUrl(attachedDesign) : undefined),
+    [attachedDesign]
+  );
 
-    if (lang === 'ja') {
-      const base = `予約：${srvName} / ${formattedDate} ${selectedTime} / ${nameStr} (${phoneStr})`;
-      return noteTrim ? `${base} / ${noteTrim}` : base;
-    }
-    const base = `Booking: ${srvName} · ${formattedDate} ${selectedTime} · ${nameStr} (${phoneStr})`;
-    return noteTrim ? `${base} · ${noteTrim}` : base;
-  }, [formattedDate, guestName, guestNote, guestPhone, lang, selectedService, selectedTime]);
+  const activeMenuLabel = selectedService
+    ? selectedService.title[lang]
+    : designEstimate
+      ? designEstimate.menuName[lang]
+      : SITE_CONFIG.bookingUI.unselected[lang];
 
-  const copyMessage = async () => {
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(bookingMessage);
-      } else {
-        const ta = document.createElement('textarea');
-        ta.value = bookingMessage;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-      }
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2600);
-    } catch {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2600);
-    }
+  const bookingMessage = useMemo(
+    () =>
+      buildReservationMessage({
+        lang,
+        mode: 'book',
+        menuLabel: activeMenuLabel,
+        design: attachedDesign,
+        designUrl,
+        dateLabel: formattedDate || SITE_CONFIG.bookingUI.unselected[lang],
+        timeLabel: selectedTime || SITE_CONFIG.bookingUI.unselected[lang],
+        guestName,
+        guestPhone,
+        guestNote,
+      }),
+    [
+      activeMenuLabel,
+      attachedDesign,
+      designUrl,
+      formattedDate,
+      guestName,
+      guestNote,
+      guestPhone,
+      lang,
+      selectedTime,
+    ]
+  );
+
+  const handleCopy = async () => {
+    await copyTextToClipboard(bookingMessage);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2600);
   };
 
-  const whatsappUrl = `https://wa.me/${SITE_CONFIG.contact.whatsappNumber}?text=${encodeURIComponent(
-    bookingMessage
-  )}`;
-  const instagramUrl = `https://ig.me/m/${SITE_CONFIG.contact.instagramHandle}`;
+  const handleInstagramClick = async () => {
+    await copyTextToClipboard(bookingMessage);
+    setIgNotice(true);
+    window.open(buildInstagramDmUrl(), '_blank', 'noopener,noreferrer');
+    window.setTimeout(() => setIgNotice(false), 5500);
+  };
 
   const ui = SITE_CONFIG.bookingUI;
+
+  // Mini SVG silhouette for attached Try-on Specimen Card
+  const miniNailD = useMemo(() => {
+    if (!attachedDesign) return '';
+    return controlPointsToPathD(buildNailControlPoints(attachedDesign.shape, 26, 44));
+  }, [attachedDesign]);
+
+  const miniNailHex = useMemo(() => {
+    if (!attachedDesign) return '#EDE6DF';
+    const cId = attachedDesign.fingers[2].colorId;
+    return SITE_CONFIG.palette.find((p) => p.id === cId)?.hex || '#EDE6DF';
+  }, [attachedDesign]);
 
   return (
     <section
       id="booking"
-      className="relative w-full hairline-t py-24 sm:py-32 lg:py-36 px-5 sm:px-8 lg:px-12"
+      ref={sectionRef}
+      className="relative z-10 w-full hairline-t pt-24 pb-24 sm:pt-32 sm:pb-32 px-5 sm:px-8 lg:px-12 overflow-hidden"
       style={{ backgroundColor: '#F2EEE8', color: '#241E1A' }}
     >
-      <div className="grid grid-cols-12 gap-y-12 lg:gap-x-10">
-        {/* Asymmetric Left Step Selector & Live Visual Receipt (zero prose) */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col justify-between">
+      {/* Subtle 2nd frosted-vellum transition sheet gliding quietly off to the right once */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-20 vellum-paper-texture"
+        style={{
+          backgroundColor: 'rgba(245, 241, 235, 0.85)',
+          transform: vellumSlid ? 'translate3d(105%, 0, 0)' : 'translate3d(0%, 0, 0)',
+          opacity: vellumSlid ? 0 : 1,
+          transitionProperty: 'transform, opacity',
+          transitionDuration: '1.15s',
+          transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      />
+
+      <div className="grid grid-cols-12 gap-y-8 lg:gap-x-10">
+        {/* DESKTOP Left Step Rail + Live Receipt (hidden verbose list on mobile -> single row below) */}
+        <div className="hidden lg:flex lg:col-span-4 flex-col justify-between">
           <ol className="list-none p-0 m-0 space-y-4">
             {ui.stepLabels.map((label, idx) => {
               const active = idx === step;
@@ -170,7 +248,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                     className="bg-transparent border-0 p-0 cursor-pointer flex items-center gap-4 text-left transition-colors"
                     style={{
                       color: active ? '#241E1A' : completed ? '#241E1A' : '#8A8178',
-                      opacity: active ? 1 : completed ? 0.68 : 0.45,
+                      opacity: active ? 1 : completed ? 0.7 : 0.45,
                     }}
                   >
                     <span
@@ -182,8 +260,8 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                           'width 0.45s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease',
                       }}
                     />
-                    <span className="font-editorial text-[24px] sm:text-[28px] leading-none">
-                      {label[lang]}
+                    <span className="font-editorial text-[26px] leading-none">
+                      0{idx + 1} {label[lang]}
                     </span>
                   </button>
                 </li>
@@ -191,25 +269,96 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
             })}
           </ol>
 
+          {/* Live Selection Receipt — shows "未選択 / Not selected" cleanly until chosen */}
           <div
-            className="mt-12 lg:mt-20 pt-5 hairline-t space-y-1.5 font-label tabular-nums"
+            className="mt-16 pt-5 hairline-t space-y-2 font-label tabular-nums"
             style={{ color: '#8A8178' }}
           >
-            <div style={{ color: '#241E1A' }}>
-              {selectedService.title[lang]} · {selectedService.price}
+            <div className="flex justify-between gap-4">
+              <span>{ui.stepLabels[0][lang]}</span>
+              <span style={{ color: selectedService ? '#241E1A' : '#8A8178' }}>
+                {selectedService
+                  ? `${selectedService.title[lang]} · ${formatYen(selectedService.priceYen)}`
+                  : ui.unselected[lang]}
+              </span>
             </div>
-            <div>
-              {formattedDate} · {selectedTime}
+            <div className="flex justify-between gap-4">
+              <span>{ui.stepLabels[1][lang]}</span>
+              <span style={{ color: selectedDay ? '#241E1A' : '#8A8178' }}>
+                {formattedDate || ui.unselected[lang]}
+              </span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span>{ui.stepLabels[2][lang]}</span>
+              <span style={{ color: selectedTime ? '#241E1A' : '#8A8178' }}>
+                {selectedTime || ui.unselected[lang]}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Asymmetric Right 4-Step Interactive Stage */}
+        {/* Right 4-Step Interactive Stage (full width on mobile with compact single-row step bar) */}
         <div className="col-span-12 lg:col-span-7 lg:col-start-6">
-          <div className="mb-8">
-            <div className="flex items-center justify-end mb-3">
-              <span className="font-label tabular-nums" style={{ color: '#8A8178' }}>
-                0{step + 1} / 04
+          {/* Attached Try-on Specimen Design Card (when arriving from Nail Try-on Studio) */}
+          {attachedDesign && designEstimate && (
+            <div
+              className="mb-7 p-4 rounded-[2px] flex items-center justify-between gap-4"
+              style={{
+                backgroundColor: '#F7F4EE',
+                border: '1px solid rgba(36,30,26,0.16)',
+                borderLeft: '3px solid #A7C1D9',
+              }}
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                <div
+                  className="w-11 h-14 shrink-0 flex items-center justify-center rounded-[2px]"
+                  style={{
+                    backgroundColor: '#EDE7DE',
+                    border: '1px solid rgba(36,30,26,0.1)',
+                  }}
+                >
+                  <svg width="26" height="42" viewBox="-18 -48 36 52">
+                    <path
+                      d={miniNailD}
+                      fill={miniNailHex}
+                      stroke="rgba(36,30,26,0.28)"
+                      strokeWidth="1.2"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <div className="font-label text-[10px]" style={{ color: '#8A8178' }}>
+                    {designEstimate.specimenCode} · {formatYen(designEstimate.estimatedYen)} ·{' '}
+                    {designEstimate.estimatedMinutes}M
+                  </div>
+                  <div className="font-editorial text-[18px] sm:text-[20px] leading-snug text-[#241E1A] truncate">
+                    {designEstimate.summaryText[lang]}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onEditDesign}
+                className="shrink-0 bg-transparent border-0 pb-0.5 cursor-pointer font-label"
+                style={{
+                  color: '#241E1A',
+                  borderBottom: '1px solid rgba(36,30,26,0.35)',
+                }}
+              >
+                {ui.changeDesign[lang]}
+              </button>
+            </div>
+          )}
+
+          {/* Compact Top Step Indicator & 1px Progress Line (Mobile = single line "1 / 4 · メニュー") */}
+          <div className="mb-7">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-label" style={{ color: '#241E1A' }}>
+                {step + 1} / 4 · {ui.stepLabels[step][lang]}
+              </span>
+              <span className="font-label lg:hidden tabular-nums" style={{ color: '#8A8178' }}>
+                {selectedService ? formatYen(selectedService.priceYen) : ui.unselected[lang]}
               </span>
             </div>
             <div
@@ -227,16 +376,17 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
             </div>
           </div>
 
+          {/* Horizontal Sliding 4-Step Container */}
           <div className="overflow-hidden">
             <div
               className="flex"
               style={{
                 transform: `translate3d(-${step * 100}%, 0, 0)`,
-                transition: 'transform 0.75s cubic-bezier(0.22, 1, 0.36, 1)',
+                transition: 'transform 0.72s cubic-bezier(0.22, 1, 0.36, 1)',
                 willChange: 'transform',
               }}
             >
-              {/* STEP 1: Services */}
+              {/* STEP 1: Services (¥6,000–¥9,000) */}
               <div className="w-full shrink-0 pr-1">
                 <div className="hairline-t">
                   {services.map((srv) => {
@@ -245,33 +395,30 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                       <button
                         key={srv.id}
                         type="button"
-                        onClick={() => {
-                          setSelectedServiceId(srv.id);
-                          setStep(1);
-                        }}
+                        onClick={() => setSelectedServiceId(srv.id)}
                         className="w-full text-left bg-transparent border-0 hairline-b py-5 pl-4 pr-2 cursor-pointer flex items-baseline justify-between gap-4 relative transition-colors"
                         style={{
                           borderLeft: selected
                             ? '2px solid #A7C1D9'
                             : '2px solid transparent',
                           backgroundColor: selected
-                            ? 'rgba(167, 193, 217, 0.08)'
+                            ? 'rgba(167, 193, 217, 0.09)'
                             : 'transparent',
                         }}
                       >
-                        <div className="flex items-baseline gap-3">
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                           <span className="font-label" style={{ color: '#8A8178' }}>
                             {srv.index}
                           </span>
-                          <span className="font-editorial text-[24px] sm:text-[28px] leading-tight text-[#241E1A]">
+                          <span className="font-editorial jp-heading text-[22px] sm:text-[26px] leading-tight text-[#241E1A]">
                             {srv.title[lang]}
                           </span>
-                          <span className="font-label ml-2 tabular-nums" style={{ color: '#8A8178' }}>
+                          <span className="font-label tabular-nums" style={{ color: '#8A8178' }}>
                             {srv.durationMin}M
                           </span>
                         </div>
-                        <span className="font-editorial text-[24px] sm:text-[28px] shrink-0 text-[#241E1A] tabular-nums">
-                          {srv.price}
+                        <span className="font-editorial text-[22px] sm:text-[26px] shrink-0 text-[#241E1A] tabular-nums">
+                          {formatYen(srv.priceYen)}
                         </span>
                       </button>
                     );
@@ -279,7 +426,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                 </div>
               </div>
 
-              {/* STEP 2: Minimalist 21-day calendar (closed days visually slashed) */}
+              {/* STEP 2: Minimalist 21-day Calendar (closed days slashed & disabled) */}
               <div className="w-full shrink-0 pr-1">
                 <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-3">
                   {WEEKDAY_HEADERS[lang].map((wd) => (
@@ -304,10 +451,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                         key={cell.iso}
                         type="button"
                         disabled={cell.isClosed}
-                        onClick={() => {
-                          setSelectedIso(cell.iso);
-                          setStep(2);
-                        }}
+                        onClick={() => setSelectedIso(cell.iso)}
                         className="relative py-3.5 px-1 rounded-[2px] flex flex-col items-center justify-center transition-colors"
                         style={{
                           backgroundColor: selected ? '#241E1A' : 'transparent',
@@ -346,8 +490,11 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                 </div>
               </div>
 
-              {/* STEP 3: Flat time slots */}
+              {/* STEP 3: Flat Time Slots */}
               <div className="w-full shrink-0 pr-1">
+                <div className="font-label mb-4" style={{ color: '#8A8178' }}>
+                  {formattedDate || ui.unselected[lang]}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {timeSlots.map((slot) => {
                     const selected = slot === selectedTime;
@@ -355,10 +502,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                       <button
                         key={slot}
                         type="button"
-                        onClick={() => {
-                          setSelectedTime(slot);
-                          setStep(3);
-                        }}
+                        onClick={() => setSelectedTime(slot)}
                         className="py-6 px-5 rounded-[2px] cursor-pointer flex items-center justify-between transition-colors"
                         style={{
                           backgroundColor: selected ? '#241E1A' : 'transparent',
@@ -383,9 +527,9 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                 </div>
               </div>
 
-              {/* STEP 4: Clean hairline inputs + compact summary + WhatsApp / IG / Copy */}
-              <div className="w-full shrink-0 pr-1 space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* STEP 4: Guest Details + Formatted Message Preview + LINE / Instagram DM / Copy */}
+              <div className="w-full shrink-0 pr-1 space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <label className="block">
                     <span className="font-label block mb-2" style={{ color: '#8A8178' }}>
                       {ui.nameLabel[lang]}
@@ -429,41 +573,36 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                     backgroundColor: 'rgba(36, 30, 26, 0.02)',
                   }}
                 >
-                  <p className="m-0 font-label text-[12px] normal-case tracking-[0.02em] leading-relaxed text-[#241E1A] select-all">
+                  <p className="m-0 font-label text-[12px] normal-case tracking-[0.02em] leading-relaxed text-[#241E1A] select-all break-all">
                     {bookingMessage}
                   </p>
                 </div>
 
+                {/* Japan-native booking actions: LINE primary + Instagram DM (auto-copy) + Copy */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <a
-                    href={whatsappUrl}
+                    href={buildLineOaUrl(bookingMessage)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="py-3.5 px-4 rounded-[2px] text-center no-underline font-label transition-opacity hover:opacity-88"
                     style={{ backgroundColor: '#241E1A', color: '#F2EEE8' }}
                   >
-                    {ui.sendWhatsApp[lang]}
+                    {ui.sendLine[lang]}
                   </a>
-                  <a
-                    href={instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      void copyMessage();
-                    }}
-                    className="py-3.5 px-4 rounded-[2px] text-center no-underline font-label transition-colors hover:border-[#A7C1D9]"
+                  <button
+                    type="button"
+                    onClick={handleInstagramClick}
+                    className="py-3.5 px-4 rounded-[2px] bg-transparent cursor-pointer font-label transition-colors hover:border-[#A7C1D9]"
                     style={{
                       color: '#241E1A',
                       border: '1px solid rgba(36, 30, 26, 0.28)',
                     }}
                   >
                     {ui.sendInstagram[lang]}
-                  </a>
+                  </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      void copyMessage();
-                    }}
+                    onClick={handleCopy}
                     className="py-3.5 px-4 rounded-[2px] bg-transparent cursor-pointer font-label transition-colors"
                     style={{
                       color: '#241E1A',
@@ -476,31 +615,40 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                     {copied ? ui.copied[lang] : ui.copyText[lang]}
                   </button>
                 </div>
+
+                {igNotice && (
+                  <div
+                    role="status"
+                    className="font-label text-[11px] pt-1"
+                    style={{ color: '#241E1A' }}
+                  >
+                    {ui.igCopiedNotice[lang]}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="mt-10 pt-5 hairline-t flex items-center justify-between">
+          {/* Explicit Step Controls: "戻る / Back" + "次へ / Next" */}
+          <div className="mt-9 pt-5 hairline-t flex items-center justify-between">
             <button
               type="button"
-              aria-label="Previous step"
               disabled={step === 0}
               onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="w-10 h-10 rounded-[2px] hairline-all bg-transparent flex items-center justify-center font-label cursor-pointer disabled:opacity-20"
+              className="px-4 py-2.5 rounded-[2px] hairline-all bg-transparent font-label cursor-pointer disabled:opacity-25"
               style={{ color: '#241E1A' }}
             >
-              ←
+              ← {ui.prev[lang]}
             </button>
 
             {step < 3 && (
               <button
                 type="button"
-                aria-label="Next step"
                 onClick={() => setStep((s) => Math.min(3, s + 1))}
-                className="inline-flex items-center gap-4 px-6 py-3 rounded-[2px] border-0 cursor-pointer font-label"
+                className="inline-flex items-center gap-3.5 px-7 py-3 rounded-[2px] border-0 cursor-pointer font-label"
                 style={{ backgroundColor: '#241E1A', color: '#F2EEE8' }}
               >
-                <span>→</span>
+                <span>{ui.next[lang]}</span>
                 <span
                   className="inline-block h-[1px] w-5"
                   style={{ backgroundColor: '#A7C1D9' }}

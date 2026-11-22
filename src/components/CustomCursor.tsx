@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-type CursorMode = 'default' | 'pointer' | 'view' | 'drag';
+type CursorMode = 'default' | 'pointer' | 'view' | 'drag' | 'light';
 
 export const CustomCursor: React.FC = () => {
   const [enabled, setEnabled] = useState(false);
@@ -19,11 +19,7 @@ export const CustomCursor: React.FC = () => {
     const syncEnabled = () => {
       const active = mqPointer.matches && !mqReduced.matches;
       setEnabled(active);
-      if (active) {
-        document.body.classList.add('has-custom-cursor');
-      } else {
-        document.body.classList.remove('has-custom-cursor');
-      }
+      document.body.classList.toggle('has-custom-cursor', active);
     };
 
     syncEnabled();
@@ -48,12 +44,11 @@ export const CustomCursor: React.FC = () => {
       const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
       if (!el) return;
 
-      const darkAncestor = el.closest('[data-theme="dark"]');
-      setOverDark(Boolean(darkAncestor));
+      setOverDark(Boolean(el.closest('[data-theme="dark"]')));
 
       const cursorEl = el.closest('[data-cursor]') as HTMLElement | null;
       const declared = cursorEl?.getAttribute('data-cursor');
-      if (declared === 'view' || declared === 'drag') {
+      if (declared === 'view' || declared === 'drag' || declared === 'light') {
         setMode(declared);
       } else if (el.closest('a, button, input, textarea, [role="button"]')) {
         setMode('pointer');
@@ -62,9 +57,7 @@ export const CustomCursor: React.FC = () => {
       }
     };
 
-    const handleLeave = () => {
-      setVisible(false);
-    };
+    const handleLeave = () => setVisible(false);
 
     window.addEventListener('mousemove', handleMove, { passive: true });
     document.addEventListener('mouseleave', handleLeave);
@@ -73,8 +66,8 @@ export const CustomCursor: React.FC = () => {
     const render = () => {
       const cur = currentRef.current;
       const tgt = targetRef.current;
-      cur.x += (tgt.x - cur.x) * 0.18;
-      cur.y += (tgt.y - cur.y) * 0.18;
+      cur.x += (tgt.x - cur.x) * 0.2;
+      cur.y += (tgt.y - cur.y) * 0.2;
 
       if (cursorRef.current) {
         cursorRef.current.style.transform = `translate3d(${cur.x}px, ${cur.y}px, 0) translate(-50%, -50%)`;
@@ -94,16 +87,19 @@ export const CustomCursor: React.FC = () => {
   if (!enabled) return null;
 
   const isExpanded = mode === 'view' || mode === 'drag';
-  const size = isExpanded ? 64 : mode === 'pointer' ? 14 : 8;
+  const isLightMode = mode === 'light';
+  const size = isExpanded ? 64 : isLightMode ? 24 : mode === 'pointer' ? 14 : 8;
   const bgColor = isExpanded
     ? overDark
       ? '#F2EEE8'
       : '#241E1A'
-    : mode === 'pointer'
-      ? '#A7C1D9'
-      : overDark
-        ? '#F2EEE8'
-        : '#241E1A';
+    : isLightMode
+      ? 'transparent'
+      : mode === 'pointer'
+        ? '#A7C1D9'
+        : overDark
+          ? '#F2EEE8'
+          : '#241E1A';
   const textColor = overDark ? '#1C1917' : '#F2EEE8';
 
   return (
@@ -115,14 +111,21 @@ export const CustomCursor: React.FC = () => {
         width: `${size}px`,
         height: `${size}px`,
         backgroundColor: bgColor,
+        border: isLightMode ? '1px solid #241E1A' : 'none',
         color: textColor,
         opacity: visible ? 1 : 0,
         transitionProperty: 'width, height, background-color, opacity',
-        transitionDuration: '0.35s',
+        transitionDuration: '0.32s',
         transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
         willChange: 'transform',
       }}
     >
+      {isLightMode && (
+        <span
+          className="block w-1.5 h-1.5 rounded-full"
+          style={{ backgroundColor: '#A7C1D9' }}
+        />
+      )}
       {isExpanded && (
         <span className="font-label" style={{ fontSize: '11px', lineHeight: 1 }}>
           {mode === 'view' ? 'View' : 'Drag'}

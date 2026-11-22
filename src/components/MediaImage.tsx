@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { resolveAssetUrl } from '../utils/assetUrl';
 
 interface MediaImageProps {
+  /** Base path without extension or full image path (e.g. "/media/works/01.webp") */
   src: string;
   alt: string;
   className?: string;
   style?: React.CSSProperties;
   dark?: boolean;
   loading?: 'eager' | 'lazy';
+  fetchPriority?: 'high' | 'low' | 'auto';
+  sizes?: string;
+  /** Optional responsive smaller width variant suffix (e.g. 480 for "-480.webp") */
+  smallWidth?: number;
+  largeWidth?: number;
   objectPosition?: string;
 }
 
@@ -18,6 +24,10 @@ export const MediaImage: React.FC<MediaImageProps> = ({
   style,
   dark = false,
   loading = 'lazy',
+  fetchPriority = 'auto',
+  sizes = '(max-width: 768px) 85vw, 55vw',
+  smallWidth,
+  largeWidth = 896,
   objectPosition = 'center center',
 }) => {
   const [failed, setFailed] = useState(false);
@@ -42,12 +52,44 @@ export const MediaImage: React.FC<MediaImageProps> = ({
     );
   }
 
+  const resolved = resolveAssetUrl(src);
+  const isWebp = /\.webp$/i.test(resolved);
+  const stem = isWebp ? resolved.replace(/\.webp$/i, '') : null;
+
+  if (stem) {
+    const avifSrcSet = smallWidth
+      ? `${stem}-${smallWidth}.avif ${smallWidth}w, ${stem}.avif ${largeWidth}w`
+      : `${stem}.avif`;
+    const webpSrcSet = smallWidth
+      ? `${stem}-${smallWidth}.webp ${smallWidth}w, ${stem}.webp ${largeWidth}w`
+      : `${stem}.webp`;
+
+    return (
+      <picture className="block w-full h-full">
+        <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />
+        <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />
+        <img
+          src={resolved}
+          alt={alt}
+          loading={loading}
+          decoding="async"
+          fetchPriority={fetchPriority}
+          draggable={false}
+          onError={() => setFailed(true)}
+          className={className}
+          style={{ objectPosition, ...style }}
+        />
+      </picture>
+    );
+  }
+
   return (
     <img
-      src={resolveAssetUrl(src)}
+      src={resolved}
       alt={alt}
       loading={loading}
       decoding="async"
+      fetchPriority={fetchPriority}
       draggable={false}
       onError={() => setFailed(true)}
       className={className}

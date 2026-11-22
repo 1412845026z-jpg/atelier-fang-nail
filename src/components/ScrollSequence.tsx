@@ -23,6 +23,8 @@ interface ScrollSequenceProps {
   previewLastFrame?: string;
   scrollLength?: string;
   optional?: boolean;
+  /** When false, skip all network HEAD probes so console stays 100% free of 404s */
+  enabled?: boolean;
   onLoadProgress?: (percent: number) => void;
   onLoadComplete?: () => void;
   children?: (state: ScrollSequenceRenderState) => React.ReactNode;
@@ -184,6 +186,7 @@ export const ScrollSequence: React.FC<ScrollSequenceProps> = ({
   previewLastFrame,
   scrollLength = '400vh',
   optional = false,
+  enabled = true,
   onLoadProgress,
   onLoadComplete,
   children,
@@ -520,6 +523,14 @@ export const ScrollSequence: React.FC<ScrollSequenceProps> = ({
   }, [drawStateAtStep]);
 
   useEffect(() => {
+    if (!enabled) {
+      setHasMedia(false);
+      setMediaMissing(true);
+      onLoadProgressRef.current?.(100);
+      onLoadCompleteRef.current?.();
+      return;
+    }
+
     const signal = { cancelled: false };
     const resolvedFramesDir = framesDir ? resolveAssetUrl(framesDir) : undefined;
     const resolvedSrc = resolveAssetUrl(src);
@@ -587,6 +598,7 @@ export const ScrollSequence: React.FC<ScrollSequenceProps> = ({
       revokeObjectUrls();
     };
   }, [
+    enabled,
     src,
     framesDir,
     optional,

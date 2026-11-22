@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Lang, SITE_CONFIG } from '../config';
+import { BrandLogo } from './BrandLogo';
 
 interface HeaderProps {
   lang: Lang;
@@ -12,32 +13,56 @@ const LANG_OPTIONS: { code: Lang; label: string }[] = [
   { code: 'en', label: 'EN' },
 ];
 
+/**
+ * Solid-surface editorial header:
+ * - Transparent only over opening hero veil
+ * - Solid oatmeal (#F2EEE8) + 1px bottom hairline past hero (zero glassmorphism!)
+ * - Auto-hides on downward scroll, reappears cleanly on upward scroll so it never collides with content
+ */
 export const Header: React.FC<HeaderProps> = ({
   lang,
   onLangChange,
   onNavigate,
 }) => {
   const [onDark, setOnDark] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
-    const checkDarkOverlap = () => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      const heroThreshold = window.innerHeight * 0.65;
+      setPastHero(y > heroThreshold);
+
+      // Hide when scrolling down past hero; reveal immediately on scroll up or near top
+      const delta = y - lastScrollYRef.current;
+      if (y <= 120) {
+        setHidden(false);
+      } else if (delta > 12 && y > heroThreshold) {
+        setHidden(true);
+      } else if (delta < -8) {
+        setHidden(false);
+      }
+      lastScrollYRef.current = y;
+
       const darkSections = document.querySelectorAll<HTMLElement>('[data-theme="dark"]');
       let overlapping = false;
       darkSections.forEach((sec) => {
         const rect = sec.getBoundingClientRect();
-        if (rect.top <= 48 && rect.bottom >= 24) {
+        if (rect.top <= 56 && rect.bottom >= 24) {
           overlapping = true;
         }
       });
       setOnDark(overlapping);
     };
 
-    checkDarkOverlap();
-    window.addEventListener('scroll', checkDarkOverlap, { passive: true });
-    window.addEventListener('resize', checkDarkOverlap);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
-      window.removeEventListener('scroll', checkDarkOverlap);
-      window.removeEventListener('resize', checkDarkOverlap);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
     };
   }, []);
 
@@ -45,13 +70,28 @@ export const Header: React.FC<HeaderProps> = ({
   const mutedColor = onDark ? 'rgba(242, 238, 232, 0.5)' : '#8A8178';
   const pillBg = onDark ? '#F2EEE8' : '#241E1A';
   const pillText = onDark ? '#1C1917' : '#F2EEE8';
+  const barBg = !pastHero
+    ? 'transparent'
+    : onDark
+      ? '#1C1917'
+      : '#F2EEE8';
+  const barBorder = !pastHero
+    ? '1px solid transparent'
+    : onDark
+      ? '1px solid rgba(242, 238, 232, 0.14)'
+      : '1px solid rgba(36, 30, 26, 0.14)';
 
   return (
     <header
-      className="fixed top-0 inset-x-0 z-50 px-5 sm:px-8 lg:px-12 py-4 flex items-center justify-between pointer-events-none"
+      className="fixed top-0 inset-x-0 z-50 px-5 sm:px-8 lg:px-12 h-[60px] flex items-center justify-between"
       style={{
         color: inkColor,
-        transition: 'color 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
+        backgroundColor: barBg,
+        borderBottom: barBorder,
+        transform: hidden ? 'translate3d(0, -105%, 0)' : 'translate3d(0, 0, 0)',
+        transitionProperty: 'transform, background-color, border-color, color',
+        transitionDuration: '0.42s',
+        transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
       }}
     >
       <a
@@ -60,16 +100,23 @@ export const Header: React.FC<HeaderProps> = ({
           e.preventDefault();
           onNavigate('hero');
         }}
-        className="pointer-events-auto font-editorial text-[19px] sm:text-[21px] tracking-[-0.01em] leading-none no-underline"
-        style={{ color: inkColor }}
+        className="no-underline"
       >
-        {SITE_CONFIG.brandName}
+        <BrandLogo color={inkColor} size="sm" />
       </a>
 
-      <nav
-        aria-label="Primary"
-        className="pointer-events-auto hidden md:flex items-center gap-9"
-      >
+      <nav aria-label="Primary" className="hidden md:flex items-center gap-8">
+        <a
+          href="#tryon"
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate('tryon');
+          }}
+          className="font-label no-underline transition-opacity duration-300 hover:opacity-55"
+          style={{ color: inkColor }}
+        >
+          {SITE_CONFIG.nav.tryon[lang]}
+        </a>
         <a
           href="#works"
           onClick={(e) => {
@@ -105,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
         </a>
       </nav>
 
-      <div className="pointer-events-auto flex items-center gap-4 sm:gap-6">
+      <div className="flex items-center gap-4 sm:gap-6">
         <div className="flex items-center gap-2 font-label" aria-label="Language switch">
           {LANG_OPTIONS.map((item, idx) => {
             const active = lang === item.code;

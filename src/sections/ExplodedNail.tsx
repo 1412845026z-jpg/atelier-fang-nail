@@ -1,137 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Lang, SITE_CONFIG } from '../config';
+import { NailDesignState } from '../types/nail';
+import {
+  buildAccentPositions,
+  buildArtLinePaths,
+  buildFrenchSmileMaskPath,
+  buildNailControlPoints,
+  controlPointsToPathD,
+  controlPointsToTipRimD,
+  LENGTH_MULTIPLIERS,
+} from '../utils/nailGeometry';
+import { MaskedLines } from '../components/MaskedLines';
 
 gsap.registerPlugin(ScrollTrigger);
 
 interface ExplodedNailProps {
   lang: Lang;
+  /** Reuses the user's live Try-on Studio design (shape, length, color, finish, art) */
+  design: NailDesignState;
 }
 
-const ALMOND_PATH =
-  'M 110 16 C 151 16 184 106 184 212 C 184 276 155 322 110 322 C 65 322 36 276 36 212 C 36 106 69 16 110 16 Z';
-
-/**
- * Refined tactile glass / mineral swatch layers (no cartoon flat fills, no heavy black borders).
- */
-function renderNailLayerSvg(layerIdx: number, highlighted: boolean) {
-  const edgeStroke = highlighted ? '#A7C1D9' : 'rgba(36,30,26,0.13)';
-  const strokeW = highlighted ? '1.6' : '0.9';
-
-  switch (layerIdx) {
-    case 0:
-      // 01 Prep: warm organic shell-ivory matte keratin
-      return (
-        <svg viewBox="0 0 220 340" className="w-full h-full overflow-visible">
-          <defs>
-            <linearGradient id="layer-0-grad" x1="15%" y1="0%" x2="85%" y2="100%">
-              <stop offset="0%" stopColor="#EBE0D5" stopOpacity="0.9" />
-              <stop offset="55%" stopColor="#E1D1C3" stopOpacity="0.86" />
-              <stop offset="100%" stopColor="#D7C3B4" stopOpacity="0.9" />
-            </linearGradient>
-            <clipPath id="clip-specimen-0">
-              <path d={ALMOND_PATH} />
-            </clipPath>
-          </defs>
-          <path d={ALMOND_PATH} fill="url(#layer-0-grad)" stroke={edgeStroke} strokeWidth={strokeW} />
-          <g clipPath="url(#clip-specimen-0)">
-            <ellipse cx="110" cy="310" rx="48" ry="26" fill="#F8F4EE" opacity="0.6" />
-          </g>
-        </svg>
-      );
-
-    case 1:
-      // 02 Base: translucent milky builder gel
-      return (
-        <svg viewBox="0 0 220 340" className="w-full h-full overflow-visible">
-          <defs>
-            <radialGradient id="layer-1-grad" cx="46%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="#FCF9F5" stopOpacity="0.86" />
-              <stop offset="68%" stopColor="#F2ECE3" stopOpacity="0.66" />
-              <stop offset="100%" stopColor="#E7DFD4" stopOpacity="0.52" />
-            </radialGradient>
-          </defs>
-          <path d={ALMOND_PATH} fill="url(#layer-1-grad)" stroke={edgeStroke} strokeWidth={strokeW} />
-        </svg>
-      );
-
-    case 2:
-      // 03 Color: sheer frosted powder-blue mineral veil (translucent, never flat cartoon blue)
-      return (
-        <svg viewBox="0 0 220 340" className="w-full h-full overflow-visible">
-          <defs>
-            <linearGradient id="layer-2-grad" x1="10%" y1="10%" x2="90%" y2="95%">
-              <stop offset="0%" stopColor="#CFDCE7" stopOpacity="0.68" />
-              <stop offset="52%" stopColor="#B8CDDF" stopOpacity="0.64" />
-              <stop offset="100%" stopColor="#A7C1D9" stopOpacity="0.72" />
-            </linearGradient>
-          </defs>
-          <path d={ALMOND_PATH} fill="url(#layer-2-grad)" stroke={edgeStroke} strokeWidth={strokeW} />
-        </svg>
-      );
-
-    case 3:
-      // 04 Art: delicate diagonal pearl silk sheen + micro specular line
-      return (
-        <svg viewBox="0 0 220 340" className="w-full h-full overflow-visible">
-          <defs>
-            <linearGradient id="layer-3-grad" x1="0%" y1="22%" x2="100%" y2="76%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.06" />
-              <stop offset="40%" stopColor="#F8F5F0" stopOpacity="0.46" />
-              <stop offset="52%" stopColor="#FFFFFF" stopOpacity="0.74" />
-              <stop offset="66%" stopColor="#E6E0D8" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.04" />
-            </linearGradient>
-            <clipPath id="clip-specimen-3">
-              <path d={ALMOND_PATH} />
-            </clipPath>
-          </defs>
-          <path d={ALMOND_PATH} fill="url(#layer-3-grad)" stroke={edgeStroke} strokeWidth={strokeW} />
-          <g clipPath="url(#clip-specimen-3)">
-            <path
-              d="M 56 244 C 94 212, 134 156, 160 88"
-              fill="none"
-              stroke="rgba(36,30,26,0.28)"
-              strokeWidth="0.9"
-            />
-          </g>
-        </svg>
-      );
-
-    default:
-      // 05 Top: optical liquid-glass refraction coat
-      return (
-        <svg viewBox="0 0 220 340" className="w-full h-full overflow-visible">
-          <defs>
-            <linearGradient id="layer-4-glaze" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.24" />
-              <stop offset="45%" stopColor="#FFFFFF" stopOpacity="0.04" />
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.16" />
-            </linearGradient>
-            <linearGradient id="layer-4-spec" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
-              <stop offset="48%" stopColor="#FFFFFF" stopOpacity="0.92" />
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-            </linearGradient>
-            <clipPath id="clip-specimen-4">
-              <path d={ALMOND_PATH} />
-            </clipPath>
-          </defs>
-          <path d={ALMOND_PATH} fill="url(#layer-4-glaze)" stroke={edgeStroke} strokeWidth={strokeW} />
-          <g clipPath="url(#clip-specimen-4)">
-            <path
-              d="M 70 294 L 92 294 L 152 44 L 135 44 Z"
-              fill="url(#layer-4-spec)"
-              opacity="0.92"
-            />
-          </g>
-        </svg>
-      );
-  }
-}
-
-export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
+export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang, design }) => {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [progress, setProgress] = useState(0);
   const [focusedLayer, setFocusedLayer] = useState<number | null>(null);
@@ -163,16 +54,189 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
       start: 'top top',
       end: 'bottom bottom',
       scrub: true,
-      onUpdate: (self) => {
-        setProgress(self.progress);
-      },
+      onUpdate: (self) => setProgress(self.progress),
     });
 
     return () => trigger.kill();
   }, [reducedMotion]);
 
-  const effectiveProgress = reducedMotion ? 0.65 : progress;
+  // Extract representative finger design (ring finger if accented, else middle finger)
+  const heroFinger = useMemo(() => {
+    const ring = design.fingers[1];
+    const mid = design.fingers[2];
+    if (ring.art !== 'none' || ring.colorId !== mid.colorId) return ring;
+    return mid;
+  }, [design.fingers]);
 
+  const colorHex =
+    SITE_CONFIG.palette.find((p) => p.id === heroFinger.colorId)?.hex || '#A9BFD4';
+  const frenchHex =
+    SITE_CONFIG.palette.find((p) => p.id === heroFinger.frenchColorId)?.hex || '#A9BFD4';
+
+  // Procedural nail silhouette matching Try-on Studio shape & proportional length
+  const { nailD, rimD, frenchD, linePaths, accents, nailLen } = useMemo(() => {
+    const w = 152;
+    const mult = LENGTH_MULTIPLIERS[design.length];
+    const len = Math.round(180 * Math.min(1.5, Math.max(0.95, mult * 0.92)));
+    const pts = buildNailControlPoints(design.shape, w, len);
+    return {
+      nailD: controlPointsToPathD(pts),
+      rimD: controlPointsToTipRimD(pts),
+      frenchD: buildFrenchSmileMaskPath(w, len, heroFinger.frenchWidth, heroFinger.frenchCurve),
+      linePaths: buildArtLinePaths(w, len, heroFinger.linePattern),
+      accents: buildAccentPositions(w, len, heroFinger.accentCount),
+      nailLen: len,
+    };
+  }, [design.length, design.shape, heroFinger]);
+
+  const renderSpecimenLayer = (layerIdx: number, highlighted: boolean) => {
+    const stroke = highlighted ? '#A7C1D9' : 'rgba(36,30,26,0.18)';
+    const sw = highlighted ? '1.8' : '1.0';
+    const vbY = -nailLen - 22;
+    const vbH = nailLen + 40;
+
+    return (
+      <svg
+        viewBox={`-96 ${vbY} 192 ${vbH}`}
+        className="w-full h-full overflow-visible"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <defs>
+          <clipPath id={`exp-clip-${layerIdx}`}>
+            <path d={nailD} />
+          </clipPath>
+          <linearGradient id={`exp-c-curve-${layerIdx}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#1B1512" stopOpacity="0.22" />
+            <stop offset="48%" stopColor="#FFFFFF" stopOpacity="0.1" />
+            <stop offset="100%" stopColor="#1B1512" stopOpacity="0.22" />
+          </linearGradient>
+          <linearGradient id="exp-top-spec" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
+            <stop offset="48%" stopColor="#FFFFFF" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+          </linearGradient>
+          <radialGradient id="exp-magnet-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#FFFDF9" stopOpacity="0.82" />
+            <stop offset="50%" stopColor="#F0E3D3" stopOpacity="0.34" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {layerIdx === 0 && (
+          <>
+            <path d={nailD} fill="#E6D5C8" fillOpacity="0.92" stroke={stroke} strokeWidth={sw} />
+            <g clipPath={`url(#exp-clip-${layerIdx})`}>
+              <ellipse cx="0" cy="-6" rx="46" ry="26" fill="#F8F3ED" opacity="0.65" />
+              <rect x="-96" y={vbY} width="192" height={vbH} fill={`url(#exp-c-curve-${layerIdx})`} />
+            </g>
+          </>
+        )}
+
+        {layerIdx === 1 && (
+          <>
+            <path d={nailD} fill="#F7F3EC" fillOpacity="0.78" stroke={stroke} strokeWidth={sw} />
+            <g clipPath={`url(#exp-clip-${layerIdx})`}>
+              <ellipse
+                cx="0"
+                cy={-nailLen * 0.48}
+                rx="38"
+                ry={nailLen * 0.34}
+                fill="#FFFFFF"
+                opacity="0.36"
+              />
+              <rect x="-96" y={vbY} width="192" height={vbH} fill={`url(#exp-c-curve-${layerIdx})`} />
+            </g>
+          </>
+        )}
+
+        {layerIdx === 2 && (
+          <>
+            <path
+              d={nailD}
+              fill={colorHex}
+              fillOpacity={heroFinger.finish === 'sheer' ? 0.68 : 0.92}
+              stroke={stroke}
+              strokeWidth={sw}
+            />
+            <g clipPath={`url(#exp-clip-${layerIdx})`}>
+              <rect x="-96" y={vbY} width="192" height={vbH} fill={`url(#exp-c-curve-${layerIdx})`} />
+            </g>
+          </>
+        )}
+
+        {layerIdx === 3 && (
+          <>
+            <path d={nailD} fill="#FFFFFF" fillOpacity="0.14" stroke={stroke} strokeWidth={sw} />
+            <g clipPath={`url(#exp-clip-${layerIdx})`}>
+              {heroFinger.finish === 'magnet' && (
+                <ellipse
+                  cx="0"
+                  cy={-nailLen * 0.52}
+                  rx="56"
+                  ry={nailLen * 0.32}
+                  fill="url(#exp-magnet-glow)"
+                  transform={`rotate(-22 0 ${-nailLen * 0.52})`}
+                />
+              )}
+              {heroFinger.art === 'french' && (
+                <path d={frenchD} fill={frenchHex} fillOpacity="0.94" />
+              )}
+              {heroFinger.art === 'line' &&
+                linePaths.map((d, i) => (
+                  <path
+                    key={i}
+                    d={d}
+                    fill="none"
+                    stroke={heroFinger.colorId === 'sumi' ? '#E6DED3' : '#241E1A'}
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                  />
+                ))}
+              {(heroFinger.art === 'pearl' || heroFinger.art === 'stud') &&
+                accents.map((a, i) => (
+                  <circle
+                    key={i}
+                    cx={a.x}
+                    cy={a.y}
+                    r={a.r * 1.1}
+                    fill={heroFinger.art === 'pearl' ? '#F5F2EC' : '#C8A977'}
+                    stroke="rgba(36,30,26,0.28)"
+                    strokeWidth="1"
+                  />
+                ))}
+              {heroFinger.art === 'none' && heroFinger.finish !== 'magnet' && (
+                <path
+                  d={`M -48 ${-nailLen * 0.25} C -12 ${-nailLen * 0.48}, 22 ${
+                    -nailLen * 0.65
+                  }, 42 ${-nailLen * 0.88}`}
+                  fill="none"
+                  stroke="rgba(36,30,26,0.26)"
+                  strokeWidth="1.6"
+                  strokeDasharray="4 4"
+                />
+              )}
+            </g>
+          </>
+        )}
+
+        {layerIdx === 4 && (
+          <>
+            <path d={nailD} fill="#FFFFFF" fillOpacity="0.14" stroke={stroke} strokeWidth={sw} />
+            <g clipPath={`url(#exp-clip-${layerIdx})`}>
+              <path
+                d={`M -34 -18 L -10 -18 L 40 ${-nailLen + 10} L 20 ${-nailLen + 10} Z`}
+                fill="url(#exp-top-spec)"
+                opacity={heroFinger.finish === 'matte' ? 0.28 : 0.92}
+              />
+            </g>
+            <path d={rimD} fill="none" stroke="#FFFFFF" strokeWidth="1.8" opacity="0.72" />
+          </>
+        )}
+      </svg>
+    );
+  };
+
+  const effectiveProgress = reducedMotion ? 0.62 : progress;
   let spreadFactor = 0;
   if (effectiveProgress <= 0.08) {
     spreadFactor = 0;
@@ -188,15 +252,15 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
     spreadFactor = 0;
   }
 
-  const maxStepPx = isMobile ? 34 : 58;
+  const closingVisible = reducedMotion || progress >= 0.84;
+  const maxStepPx = isMobile ? 38 : 66;
   const layers = SITE_CONFIG.exploded.layers;
-  const activeCountDisplay = Math.max(1, Math.min(5, Math.round(1 + spreadFactor * 4)));
 
   return (
     <section
       id="craft"
       ref={sectionRef}
-      className="relative w-full hairline-t"
+      className="relative z-10 w-full hairline-t"
       style={{
         height: reducedMotion ? 'auto' : '300vh',
         backgroundColor: '#F2EEE8',
@@ -207,38 +271,41 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
         className={
           reducedMotion
             ? 'relative w-full py-24 px-5 sm:px-8 lg:px-12'
-            : 'sticky top-0 h-[100svh] w-full overflow-hidden px-5 sm:px-8 lg:px-12 py-16 sm:py-20 flex flex-col justify-between'
+            : 'sticky top-0 h-[100svh] w-full overflow-hidden px-5 sm:px-8 lg:px-12 pt-[76px] pb-10 sm:pt-[84px] sm:pb-12 flex flex-col justify-between'
         }
       >
-        {/* Minimal numeric visual gauge (no explanatory text) */}
-        <div className="flex items-center justify-end">
+        {/* Crisp Section Title: 5 LAYERS / 5層構造 */}
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-editorial m-0 text-[26px] sm:text-[32px] leading-none text-[#241E1A]">
+            {SITE_CONFIG.exploded.heading[lang]}
+          </h2>
           <span className="font-label tabular-nums" style={{ color: '#8A8178' }}>
-            0{activeCountDisplay} / 05
+            {spreadFactor > 0.15 ? '05 / 05' : '01 / 05'}
           </span>
         </div>
 
-        {/* Interactive Isometric CSS 3D Material Stack */}
+        {/* Large ~52vh Isometric 3D Nail Stack reflecting user's live Try-on design */}
         <div className="relative flex-1 flex items-center justify-center my-2">
           <div
-            className="relative w-full max-w-[1000px] h-[440px] sm:h-[520px] flex items-center justify-center"
-            style={{ perspective: '1200px' }}
+            className="relative w-full max-w-[1120px] h-[54vh] min-h-[380px] flex items-center justify-center"
+            style={{ perspective: '1300px' }}
           >
             <div
               className="relative"
               style={{
-                width: isMobile ? '138px' : '208px',
-                height: isMobile ? '214px' : '322px',
+                width: isMobile ? '176px' : '270px',
+                height: isMobile ? '280px' : '430px',
                 transformStyle: 'preserve-3d',
-                transform: `translate3d(${isMobile ? '-42px' : '0px'}, ${
-                  isMobile ? '16px' : '22px'
-                }, 0) rotateX(58deg) rotateZ(-35deg)`,
+                transform: `translate3d(${isMobile ? '-48px' : '0px'}, ${
+                  isMobile ? '14px' : '24px'
+                }, 0) rotateX(58deg) rotateZ(-34deg)`,
               }}
             >
               {layers.map((layer, idx) => {
                 const isFocused = focusedLayer === idx;
                 const isDimmed = focusedLayer !== null && !isFocused;
                 const zPx = (idx - 2) * maxStepPx * spreadFactor;
-                const slideOut = isFocused && spreadFactor > 0.2 ? 16 : 0;
+                const slideOut = isFocused && spreadFactor > 0.2 ? 20 : 0;
 
                 return (
                   <div
@@ -254,19 +321,19 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                       transform: `translate3d(${slideOut}px, ${-slideOut * 0.4}px, ${zPx.toFixed(
                         1
                       )}px)`,
-                      opacity: isDimmed ? 0.32 : 1,
+                      opacity: isDimmed ? 0.3 : 1,
                       transition:
-                        'opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)',
+                        'opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)',
                       willChange: 'transform, opacity',
                     }}
                   >
-                    {renderNailLayerSvg(idx, isFocused)}
+                    {renderSpecimenLayer(idx, isFocused)}
                   </div>
                 );
               })}
             </div>
 
-            {/* Interactive hairline leader callouts (single-word label only, hover/tap to isolate) */}
+            {/* Desktop High-Contrast Callouts (>= 14px, primary cocoa ink #241E1A) */}
             {!isMobile ? (
               <div className="pointer-events-none absolute inset-0">
                 {layers.map((layer, idx) => {
@@ -279,8 +346,8 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                   const lineProgress = reducedMotion ? 1 : Math.min(openT, closeT);
 
                   const isRightSide = idx % 2 === 0;
-                  const rowYPercent = 70 - idx * 10.2;
-                  const pathLen = 115;
+                  const rowYPercent = 72 - idx * 11;
+                  const pathLen = 116;
                   const isFocused = focusedLayer === idx;
                   const isDimmed = focusedLayer !== null && !isFocused;
 
@@ -291,24 +358,24 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                       style={{
                         top: `${rowYPercent}%`,
                         transform: 'translateY(-50%)',
-                        opacity: lineProgress > 0.02 ? (isDimmed ? 0.35 : 1) : 0,
+                        opacity: lineProgress > 0.02 ? (isDimmed ? 0.32 : 1) : 0,
                         transition: 'opacity 0.35s ease',
                       }}
                     >
                       {isRightSide ? (
-                        <div className="ml-[55%] flex items-center gap-3">
+                        <div className="ml-[57%] flex items-center gap-3.5">
                           <svg width="96" height="14" className="shrink-0 overflow-visible">
                             <circle
                               cx="4"
                               cy="7"
-                              r={isFocused ? '3' : '2'}
+                              r={isFocused ? '3.5' : '2.5'}
                               fill={isFocused ? '#A7C1D9' : '#241E1A'}
                               opacity={lineProgress}
                             />
                             <path
                               d="M 7 7 L 94 7"
                               fill="none"
-                              stroke={isFocused ? '#A7C1D9' : 'rgba(36,30,26,0.34)'}
+                              stroke={isFocused ? '#A7C1D9' : 'rgba(36,30,26,0.45)'}
                               strokeWidth="1"
                               strokeDasharray={pathLen}
                               strokeDashoffset={pathLen * (1 - lineProgress)}
@@ -319,13 +386,16 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                             onMouseEnter={() => setFocusedLayer(idx)}
                             onMouseLeave={() => setFocusedLayer(null)}
                             onClick={() => setFocusedLayer((c) => (c === idx ? null : idx))}
-                            className="pointer-events-auto bg-transparent border-0 p-0 cursor-pointer flex items-baseline gap-2.5"
+                            className="pointer-events-auto bg-transparent border-0 p-0 cursor-pointer flex items-baseline gap-3"
                             style={{
                               opacity: lineProgress,
                               transform: `translate3d(${(1 - lineProgress) * 12}px, 0, 0)`,
                             }}
                           >
-                            <span className="font-label" style={{ color: '#8A8178' }}>
+                            <span
+                              className="font-label"
+                              style={{ fontSize: '13px', color: '#241E1A' }}
+                            >
                               {layer.index}
                             </span>
                             <span className="font-editorial text-[22px] leading-none text-[#241E1A]">
@@ -334,13 +404,13 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                           </button>
                         </div>
                       ) : (
-                        <div className="mr-[55%] ml-auto flex items-center gap-3">
+                        <div className="mr-[57%] ml-auto flex items-center gap-3.5">
                           <button
                             type="button"
                             onMouseEnter={() => setFocusedLayer(idx)}
                             onMouseLeave={() => setFocusedLayer(null)}
                             onClick={() => setFocusedLayer((c) => (c === idx ? null : idx))}
-                            className="pointer-events-auto bg-transparent border-0 p-0 cursor-pointer flex items-baseline gap-2.5"
+                            className="pointer-events-auto bg-transparent border-0 p-0 cursor-pointer flex items-baseline gap-3"
                             style={{
                               opacity: lineProgress,
                               transform: `translate3d(${-(1 - lineProgress) * 12}px, 0, 0)`,
@@ -349,7 +419,10 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                             <span className="font-editorial text-[22px] leading-none text-[#241E1A]">
                               {layer.name[lang]}
                             </span>
-                            <span className="font-label" style={{ color: '#8A8178' }}>
+                            <span
+                              className="font-label"
+                              style={{ fontSize: '13px', color: '#241E1A' }}
+                            >
                               {layer.index}
                             </span>
                           </button>
@@ -357,7 +430,7 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                             <path
                               d="M 89 7 L 2 7"
                               fill="none"
-                              stroke={isFocused ? '#A7C1D9' : 'rgba(36,30,26,0.34)'}
+                              stroke={isFocused ? '#A7C1D9' : 'rgba(36,30,26,0.45)'}
                               strokeWidth="1"
                               strokeDasharray={pathLen}
                               strokeDashoffset={pathLen * (1 - lineProgress)}
@@ -365,7 +438,7 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                             <circle
                               cx="92"
                               cy="7"
-                              r={isFocused ? '3' : '2'}
+                              r={isFocused ? '3.5' : '2.5'}
                               fill={isFocused ? '#A7C1D9' : '#241E1A'}
                               opacity={lineProgress}
                             />
@@ -377,7 +450,8 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                 })}
               </div>
             ) : (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[44%] flex flex-col-reverse gap-5">
+              /* Mobile >= 14px primary-ink callouts */
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[45%] flex flex-col-reverse gap-4">
                 {layers.map((layer, idx) => {
                   const openStart = 0.14 + idx * 0.07;
                   const openT = Math.max(0, Math.min(1, (effectiveProgress - openStart) / 0.12));
@@ -399,21 +473,21 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
                         transform: `translate3d(${(1 - lineProgress) * 10}px, 0, 0)`,
                       }}
                     >
-                      <svg width="20" height="10" className="shrink-0">
-                        <circle cx="3" cy="5" r="2" fill={isFocused ? '#A7C1D9' : '#241E1A'} />
+                      <svg width="18" height="10" className="shrink-0">
+                        <circle cx="3" cy="5" r="2.2" fill={isFocused ? '#A7C1D9' : '#241E1A'} />
                         <path
-                          d="M 5 5 L 19 5"
+                          d="M 5 5 L 17 5"
                           fill="none"
-                          stroke={isFocused ? '#A7C1D9' : 'rgba(36,30,26,0.38)'}
+                          stroke={isFocused ? '#A7C1D9' : 'rgba(36,30,26,0.45)'}
                           strokeWidth="1"
-                          strokeDasharray="20"
-                          strokeDashoffset={20 * (1 - lineProgress)}
+                          strokeDasharray="18"
+                          strokeDashoffset={18 * (1 - lineProgress)}
                         />
                       </svg>
-                      <span className="font-label text-[10px]" style={{ color: '#8A8178' }}>
+                      <span className="font-label" style={{ fontSize: '12px', color: '#241E1A' }}>
                         {layer.index}
                       </span>
-                      <span className="font-editorial text-[17px] leading-none text-[#241E1A]">
+                      <span className="font-editorial text-[16px] leading-none text-[#241E1A]">
                         {layer.name[lang]}
                       </span>
                     </button>
@@ -424,10 +498,16 @@ export const ExplodedNail: React.FC<ExplodedNailProps> = ({ lang }) => {
           </div>
         </div>
 
-        {/* Bottom minimal scrub hairline */}
-        <div className="flex items-center justify-center">
+        {/* Closing unification line: "見えるのは1枚。重ねているのは5層。" */}
+        <div className="min-h-[56px] flex items-end justify-between gap-6">
+          <MaskedLines
+            lines={[SITE_CONFIG.exploded.closingLine[lang]]}
+            phase={closingVisible ? 'active' : 'before'}
+            reducedMotion={reducedMotion}
+            lineClassName="font-editorial jp-heading text-[22px] sm:text-[34px] lg:text-[40px] leading-[1.16] text-[#241E1A]"
+          />
           <div
-            className="w-36 h-[1px] overflow-hidden"
+            className="hidden sm:block w-36 h-[1px] shrink-0 mb-3 overflow-hidden"
             style={{ backgroundColor: 'rgba(36, 30, 26, 0.14)' }}
           >
             <div

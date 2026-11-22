@@ -1,62 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { SITE_CONFIG } from '../config';
+import { BrandLogo } from './BrandLogo';
 
 interface PreloaderProps {
-  progress: number;
   ready: boolean;
   reducedMotion: boolean;
 }
 
-export const Preloader: React.FC<PreloaderProps> = ({
-  progress,
-  ready,
-  reducedMotion,
-}) => {
-  const [displayProgress, setDisplayProgress] = useState(0);
+/**
+ * Fast editorial preloader capped strictly under 1.1s total duration so mobile 4G LCP stays crisp.
+ */
+export const Preloader: React.FC<PreloaderProps> = ({ ready, reducedMotion }) => {
   const [exiting, setExiting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [pct, setPct] = useState(30);
 
   useEffect(() => {
-    if (reducedMotion && ready) {
-      setDisplayProgress(100);
+    if (reducedMotion) {
       setDismissed(true);
       return;
     }
 
-    let rafId = 0;
-    const target = ready ? 100 : Math.min(99, Math.max(progress, 0));
+    // Hard safety cap: keep preloader brisk under 4G
+    const safetyTimer = window.setTimeout(() => {
+      setPct(100);
+      setExiting(true);
+    }, 260);
 
-    const tick = () => {
-      setDisplayProgress((prev) => {
-        const diff = target - prev;
-        if (Math.abs(diff) < 0.8) {
-          return target;
-        }
-        return prev + diff * 0.22;
-      });
-      rafId = window.requestAnimationFrame(tick);
-    };
-
-    rafId = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(rafId);
-  }, [progress, ready, reducedMotion]);
+    return () => window.clearTimeout(safetyTimer);
+  }, [reducedMotion]);
 
   useEffect(() => {
-    if (ready && displayProgress >= 99.5 && !exiting) {
-      const t = window.setTimeout(() => setExiting(true), 120);
-      return () => window.clearTimeout(t);
+    if (reducedMotion) return;
+    if (ready) {
+      setPct(100);
+      setExiting(true);
     }
-  }, [ready, displayProgress, exiting]);
+  }, [ready, reducedMotion]);
 
   useEffect(() => {
     if (!exiting) return;
-    const t = window.setTimeout(() => setDismissed(true), 1100);
+    const t = window.setTimeout(() => setDismissed(true), 360);
     return () => window.clearTimeout(t);
   }, [exiting]);
 
   if (dismissed) return null;
-
-  const formatted = String(Math.min(100, Math.round(displayProgress))).padStart(3, '0');
 
   return (
     <div
@@ -66,27 +53,22 @@ export const Preloader: React.FC<PreloaderProps> = ({
         backgroundColor: '#F2EEE8',
         color: '#241E1A',
         clipPath: exiting ? 'inset(0 0 100% 0)' : 'inset(0 0 0% 0)',
-        transition: reducedMotion
-          ? 'none'
-          : 'clip-path 1.0s cubic-bezier(0.22, 1, 0.36, 1)',
+        transition: 'clip-path 0.36s cubic-bezier(0.22, 1, 0.36, 1)',
         pointerEvents: exiting ? 'none' : 'auto',
       }}
     >
-      <div className="w-full max-w-[360px] flex flex-col items-center">
-        <div className="font-editorial text-[clamp(2rem,4vw,3.4rem)] leading-none tracking-[-0.02em]">
-          {SITE_CONFIG.brandName}
-        </div>
+      <div className="w-full max-w-[300px] flex flex-col items-center">
+        <BrandLogo size="md" />
         <div
-          className="mt-7 w-full h-[1px] relative overflow-hidden"
-          style={{ backgroundColor: 'rgba(36, 30, 26, 0.15)' }}
+          className="mt-6 w-full h-[1px] relative overflow-hidden"
+          style={{ backgroundColor: 'rgba(36, 30, 26, 0.14)' }}
         >
           <div
-            className="absolute inset-y-0 left-0 origin-left"
+            className="absolute inset-y-0 left-0 w-full origin-left"
             style={{
-              width: '100%',
               backgroundColor: '#241E1A',
-              transform: `scaleX(${Math.min(1, displayProgress / 100)})`,
-              willChange: 'transform',
+              transform: `scaleX(${pct / 100})`,
+              transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           />
         </div>
@@ -94,9 +76,9 @@ export const Preloader: React.FC<PreloaderProps> = ({
 
       <div
         className="fixed right-8 bottom-8 font-label tabular-nums"
-        style={{ color: '#241E1A', fontSize: '12px' }}
+        style={{ color: '#8A8178', fontSize: '11px' }}
       >
-        {formatted}
+        {String(pct).padStart(3, '0')}
       </div>
     </div>
   );

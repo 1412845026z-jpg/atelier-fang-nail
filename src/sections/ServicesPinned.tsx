@@ -3,7 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Lang, SITE_CONFIG } from '../config';
 import { MediaImage } from '../components/MediaImage';
-import { BeatPhase, MaskedLines } from '../components/MaskedLines';
+import { formatYen } from '../utils/designCodec';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -70,7 +70,7 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
     return (
       <section
         id="services"
-        className="w-full hairline-t py-20 px-5 sm:px-8 lg:px-12"
+        className="w-full hairline-t pt-24 pb-20 px-5 sm:px-8 lg:px-12"
         style={{ backgroundColor: '#F2EEE8', color: '#241E1A' }}
       >
         <div className="space-y-16">
@@ -80,14 +80,27 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
                 <div className="font-label mb-3" style={{ color: '#8A8178' }}>
                   {srv.index}
                 </div>
-                <h2 className="font-editorial text-[44px] leading-none m-0">{srv.title[lang]}</h2>
+                <h2 className="font-editorial jp-heading text-[36px] leading-[1.14] m-0">
+                  {srv.titleParts[lang].map((part, pi) => (
+                    <React.Fragment key={pi}>
+                      {pi > 0 && <wbr />}
+                      {part}
+                    </React.Fragment>
+                  ))}
+                </h2>
                 <div className="mt-5 flex items-center gap-6 font-label" style={{ color: '#8A8178' }}>
                   <span>{srv.durationMin} MIN</span>
-                  <span style={{ color: '#241E1A' }}>{srv.price}</span>
+                  <span style={{ color: '#241E1A' }}>{formatYen(srv.priceYen)}</span>
                 </div>
               </div>
               <div className="lg:col-span-7 aspect-[4/3] overflow-hidden rounded-[2px]">
-                <MediaImage src={srv.image} alt={srv.title[lang]} className="w-full h-full object-cover" />
+                <MediaImage
+                  src={srv.image}
+                  smallWidth={480}
+                  largeWidth={896}
+                  alt={srv.title[lang]}
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           ))}
@@ -108,16 +121,17 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
       }}
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden flex flex-col lg:flex-row">
-        {/* Left column (45% desktop): ultra-minimal sculptural title + visual duration scale + price */}
-        <div className="order-2 lg:order-1 w-full lg:w-[45%] h-[46svh] lg:h-full px-5 sm:px-8 lg:px-12 py-6 lg:py-16 flex flex-col justify-between relative">
-          <div className="hidden lg:block font-label tabular-nums" style={{ color: '#8A8178' }}>
-            0{activeIdx + 1} / 0{count}
+        {/* Left column (45% desktop): generous top clearance below 60px header + clean jp-heading breaks */}
+        <div className="order-2 lg:order-1 w-full lg:w-[45%] h-[46svh] lg:h-full px-5 sm:px-8 lg:px-12 pt-5 pb-6 lg:pt-[84px] lg:pb-12 flex flex-col justify-between relative">
+          <div className="hidden lg:flex items-center justify-between">
+            <span className="font-label tabular-nums" style={{ color: '#8A8178' }}>
+              MENU · 0{activeIdx + 1} / 0{count}
+            </span>
           </div>
 
           <div className="relative flex-1 flex items-center">
             {services.map((srv, idx) => {
-              const phase: BeatPhase =
-                idx < activeIdx ? 'after' : idx === activeIdx ? 'active' : 'before';
+              const phase = idx < activeIdx ? 'after' : idx === activeIdx ? 'active' : 'before';
               const durationRatio = Math.min(1, srv.durationMin / 150);
 
               return (
@@ -127,7 +141,7 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
                   className="absolute inset-x-0 top-1/2 -translate-y-1/2 pr-6 lg:pr-10"
                   style={{ pointerEvents: idx === activeIdx ? 'auto' : 'none' }}
                 >
-                  <div className="overflow-hidden mb-3 lg:mb-5">
+                  <div className="overflow-hidden mb-2.5 lg:mb-4">
                     <div
                       className="font-label tabular-nums"
                       style={{
@@ -144,19 +158,42 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
                           'transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.6s ease',
                       }}
                     >
-                      {srv.index}
+                      No.{srv.index}
                     </div>
                   </div>
 
-                  <MaskedLines
-                    lines={[srv.title[lang]]}
-                    phase={phase}
-                    lineClassName="font-editorial text-[36px] sm:text-[50px] lg:text-[64px] leading-[1.04] text-[#241E1A]"
-                  />
+                  {/* Masked slide title with strict Japanese word-break (<wbr> on semantic boundaries) */}
+                  <div className="overflow-hidden py-1">
+                    <h2
+                      className="font-editorial jp-heading m-0 text-[#241E1A]"
+                      style={{
+                        fontSize: 'clamp(1.75rem, 3.4vw, 3.25rem)',
+                        lineHeight: 1.15,
+                        transform:
+                          phase === 'active'
+                            ? 'translate3d(0,0%,0)'
+                            : phase === 'after'
+                              ? 'translate3d(0,-34%,0)'
+                              : 'translate3d(0,105%,0)',
+                        opacity: phase === 'active' ? 1 : 0,
+                        filter: phase === 'after' ? 'blur(4px)' : 'blur(0px)',
+                        transitionProperty: 'transform, opacity, filter',
+                        transitionDuration: phase === 'after' ? '0.6s' : '0.9s',
+                        transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                      }}
+                    >
+                      {srv.titleParts[lang].map((part, pi) => (
+                        <React.Fragment key={pi}>
+                          {pi > 0 && <wbr />}
+                          {part}
+                        </React.Fragment>
+                      ))}
+                    </h2>
+                  </div>
 
-                  {/* Visual price + proportional duration hairline bar (zero prose) */}
+                  {/* Single-currency Japanese Yen + proportional duration bar */}
                   <div
-                    className="mt-6 lg:mt-8 max-w-[320px]"
+                    className="mt-5 lg:mt-8 max-w-[320px]"
                     style={{
                       opacity: phase === 'active' ? 1 : 0,
                       transform:
@@ -171,10 +208,10 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
                   >
                     <div className="flex items-baseline justify-between mb-3">
                       <span
-                        className="font-editorial text-[32px] lg:text-[40px] leading-none tabular-nums"
+                        className="font-editorial text-[30px] lg:text-[38px] leading-none tabular-nums"
                         style={{ color: '#241E1A' }}
                       >
-                        {srv.price}
+                        {formatYen(srv.priceYen)}
                       </span>
                       <span className="font-label tabular-nums" style={{ color: '#8A8178' }}>
                         {srv.durationMin} MIN
@@ -199,7 +236,7 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
                     <button
                       type="button"
                       onClick={() => onSelectServiceForBooking(srv.id)}
-                      className="mt-7 inline-flex items-center gap-4 bg-transparent border-0 p-0 cursor-pointer font-label group"
+                      className="mt-6 inline-flex items-center gap-4 bg-transparent border-0 p-0 cursor-pointer font-label group"
                       style={{ color: '#241E1A' }}
                     >
                       <span>{SITE_CONFIG.servicesSection.bookLabel[lang]}</span>
@@ -214,7 +251,6 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
             })}
           </div>
 
-          {/* Interactive horizontal step hairlines at bottom of left column */}
           <div className="hidden lg:flex items-center gap-2 pt-4">
             {services.map((srv, idx) => (
               <button
@@ -237,7 +273,7 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
           </div>
         </div>
 
-        {/* Right 55% wide editorial image column with bottom-to-top clip-path wipe + outgoing scale 1 -> 1.08 */}
+        {/* Right 55% wide editorial craft/tool image column with bottom-to-top clip-path wipe */}
         <div className="order-1 lg:order-2 relative w-full lg:w-[55%] h-[54svh] lg:h-full overflow-hidden">
           {services.map((srv, idx) => {
             const rawIn = idx === 0 ? 1 : Math.max(0, Math.min(1, scaled - (idx - 1)));
@@ -282,9 +318,12 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
                 >
                   <MediaImage
                     src={srv.image}
+                    smallWidth={480}
+                    largeWidth={896}
+                    sizes="(max-width: 1024px) 100vw, 55vw"
                     alt={srv.title[lang]}
                     className="w-full h-full object-cover"
-                    loading="eager"
+                    loading="lazy"
                   />
                 </div>
               </div>
@@ -296,7 +335,7 @@ export const ServicesPinned: React.FC<ServicesPinnedProps> = ({
         <nav
           aria-label="Service steps"
           className="absolute right-3 sm:right-5 top-[27svh] lg:top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-3.5 py-3 px-1.5 rounded-full"
-          style={{ backgroundColor: 'rgba(242, 238, 232, 0.82)' }}
+          style={{ backgroundColor: 'rgba(242, 238, 232, 0.86)' }}
         >
           {services.map((srv, idx) => {
             const active = idx === activeIdx;

@@ -13,6 +13,8 @@
 > - 新增「母版长图」，用来保证从花到手是同一个空间（第 4.3 节）。
 >
 > 第一批素材的审核意见见 `docs/v4-assets-review/REVIEW.md`。
+>
+> **执行时请看 `docs/v4-execute.md`**：它是按顺序做完全部素材和代码的唯一任务清单。
 > Grok 修改单里提到的 `/workspace/atelier-ui-guide.md` 不在本仓库里。如果有，请把它放到 `docs/` 下；没有的话，以本文件为准。
 
 ---

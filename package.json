@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 4173",
     "assets:setup-upscaler": "node scripts/assets/setup-realesrgan.mjs",
-    "assets:upscale": "node scripts/assets/upscale.mjs"
+    "assets:upscale": "node scripts/assets/upscale.mjs",
+    "assets:qa": "node scripts/assets/qa-set.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",

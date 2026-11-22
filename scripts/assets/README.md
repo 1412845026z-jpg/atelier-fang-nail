@@ -1,5 +1,24 @@
 # 素材处理脚本
 
+## 自检：`qa-set.mjs`
+
+检查"同一只手、只换指甲"的一组图：
+
+```bash
+npm run assets:qa -- --plate public/media/v4/plate.jpg public/media/v4/hands --out docs/v4-assets-review/v4r3/hands-qa
+```
+
+| 检查项 | 通过标准 |
+|---|---|
+| 位移 | 每张变体和底图之间的整像素位移为 0（会在 ±4px 内自动搜索）。`--align-out <文件夹>` 可以输出对齐后的副本 |
+| 指甲以外有没有被改动 | 每张 ≤ 0.5%（`--outside-limit`）。手指轮廓 1px 的重绘抖动会自动忽略，只统计真正的改动 |
+| 自动指甲遮罩 | 正好 `--expect` 个区域（默认 5）。输出 `nails.mask.png`（白色 = 指甲），可以直接给放大和合成使用 |
+| 辨识度 | 输出 `thumbs-200.jpg`，所有变体缩到 200px 宽排在一起，用肉眼看 |
+
+另外还会输出 `heatmap.jpg`（红色 = 变化）和 `report.json`。任何一项不通过时，命令的退出码为 1。
+
+2026-11-23 用第一批的 12 张手图测试：正好找到 5 个指甲；10 号的手指轮廓有轻微变形（0.63%），被标为 CHECK。
+
 ## 放大：`upscale.mjs`
 
 把 1376 宽的手部照片放大到 2K（2752×1536），同时避免 Real-ESRGAN 常见的"塑料皮肤"。

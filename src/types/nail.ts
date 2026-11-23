@@ -14,70 +14,36 @@ export type NailCategoryId =
   | 'parts'
   | 'gradation';
 
-export type NailTipShape =
-  | 'short-round'
-  | 'short-oval'
-  | 'short-square-off'
-  | 'short-almond'
-  | 'medium-oval'
-  | 'medium-round';
-
-/** 5 Japanese mainstream short-to-medium silhouette shapes for Counseling Card */
-export type CounselingShapeId =
-  | 'round'
-  | 'oval'
-  | 'square-off'
-  | 'short-almond'
-  | 'point-soft';
-
-/** Subtle optical light-play overlay confined strictly inside the 5 nail masks */
 export type OpticalEffectType = 'none' | 'magnet' | 'pearl' | 'mirror' | 'glitter';
 
 export interface FingerMaskCalibration {
   index: 0 | 1 | 2 | 3 | 4;
   id: 'pinky' | 'ring' | 'middle' | 'index' | 'thumb';
   label: LocalizedText;
-  /** Center X in source hand image coordinates */
+  /** Center X in 1376×768 reference frame */
   cx: number;
-  /** Center Y in source hand image coordinates */
+  /** Center Y in 1376×768 reference frame */
   cy: number;
-  /** Nail half-width (rx) in source pixels */
+  /** Half-width across nail plate */
   rx: number;
-  /** Nail half-height / length (ry) in source pixels */
+  /** Half-length along cuticle-to-tip axis */
   ry: number;
-  /** Rotation in degrees (0 = pointing straight up) */
+  /** Rotation angle in degrees (0 = pointing up, ~85 = pointing right along finger) */
   angleDeg: number;
-  /** Feather blur in viewBox pixels for seamless cuticle & tip blending */
-  featherPx: number;
 }
 
 export interface NailDesignItem {
-  /** '01' .. '12' */
   id: string;
-  /** Display number '01' .. '12' */
   number: string;
-  /** Exact Japanese salon design name (verbatim from spec) + English subtitle */
   name: LocalizedText;
-  /** Menu category */
   categoryId: NailCategoryId;
-  /** Short-to-medium salon nail shape */
-  shape: NailTipShape;
-  /** Primary bottle liquid hex color (visible inside 3D glass bottle) */
   liquidHex: string;
-  /** Secondary / pearl shimmer tint hex for bottle inner reflection & optical sheen */
   shimmerHex: string;
-  /** Bottle glass tint opacity / translucency hint */
   isSheer: boolean;
-  /** Bottle cap style */
-  capFinish: 'champagne-gold' | 'rose-gold' | 'deep-bordeaux';
-  /** Special code-driven light reflection strictly inside nail mask */
   opticalEffect: OpticalEffectType;
-  /** Hand photo variant path (aligned 1-to-1 with handBase) */
-  handImage: string;
-  /** High-res nail tip texture path for 3D チップ見本 */
-  tipImage: string;
-  /** Brief delicate salon note (1 short phrase, optional) */
-  note: LocalizedText;
+  bottleWebp: string;
+  bottlePng: string;
+  handWebBase: string;
 }
 
 export interface MenuCategoryMeta {
@@ -87,24 +53,69 @@ export interface MenuCategoryMeta {
   durationMin: number;
 }
 
-export interface CareMenuItem {
+export type SelfShapeId = 'round' | 'oval' | 'square';
+export type SelfLengthId = 'short' | 'medium' | 'long';
+export type SelfTechniqueId =
+  | 'onecolor'
+  | 'french'
+  | 'gradation'
+  | 'magnet'
+  | 'nuance'
+  | 'mirror';
+export type SelfAccentId = 'none' | 'pearl' | 'glitter' | 'stone' | 'goldline';
+
+export interface SelfColorOption {
   id: string;
-  categoryLabel: LocalizedText;
   name: LocalizedText;
-  priceYen: number;
-  durationMin: number;
+  poeticStem: LocalizedText;
+  hex: string;
+  sheer: boolean;
+  toneGroup: 'pale' | 'rose' | 'neutral' | 'deep';
 }
 
-export interface CounselingPayload {
-  /** Design id '01'..'12' or 'consult' for 「相談して決めたい」 */
-  designId: string;
-  shape: CounselingShapeId;
-  /** 0 = 自爪そのまま (0mm) .. 3 = ミディアム (+3mm) */
-  lengthLevel: number;
-  concerns: string[];
-  lifestyle: string;
-  preferredDate: string; // YYYY-MM-DD or 'undecided'
-  guestName: string;
-  contactChannel: 'line' | 'instagram';
-  note: string;
+export interface SelfTechniqueOption {
+  id: SelfTechniqueId;
+  label: LocalizedText;
+  poeticSuffix: LocalizedText;
+  priceDelta: number;
+  durationDelta: number;
+  /** Tone groups that harmonize best with this technique */
+  recommendedTones: ('pale' | 'rose' | 'neutral' | 'deep')[];
+}
+
+export interface SelfAccentOption {
+  id: SelfAccentId;
+  label: LocalizedText;
+  priceDelta: number;
+  durationDelta: number;
+  cutoutWebp?: string;
+  /** Techniques that pair harmoniously without visual clutter */
+  compatibleTechniques: SelfTechniqueId[];
+}
+
+export interface SelfSelection {
+  shape: SelfShapeId;
+  length: SelfLengthId;
+  colorId: string;
+  technique: SelfTechniqueId;
+  accent: SelfAccentId;
+}
+
+export interface ActiveCardSpec {
+  mode: 'preset' | 'self';
+  codeNumber: string;
+  title: LocalizedText;
+  subtitle: LocalizedText;
+  priceYen: number;
+  durationMin: number;
+  swatchHex: string;
+  presetId?: string;
+  selfSelection?: SelfSelection;
+}
+
+export interface VideoManifest {
+  a: boolean;
+  b: boolean;
+  c: boolean;
+  loop: boolean;
 }

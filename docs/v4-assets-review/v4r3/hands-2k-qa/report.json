@@ -1,0 +1,158 @@
+{
+  "plate": "02.jpg",
+  "size": [
+    2752,
+    1536
+  ],
+  "threshold": 24,
+  "nailBlobs": [
+    {
+      "area": 16942,
+      "box": [
+        1536,
+        1046,
+        164,
+        148
+      ]
+    },
+    {
+      "area": 9841,
+      "box": [
+        1840,
+        645,
+        135,
+        88
+      ]
+    },
+    {
+      "area": 9809,
+      "box": [
+        1671,
+        546,
+        137,
+        87
+      ]
+    },
+    {
+      "area": 7895,
+      "box": [
+        1852,
+        785,
+        121,
+        80
+      ]
+    },
+    {
+      "area": 4950,
+      "box": [
+        1352,
+        466,
+        105,
+        60
+      ]
+    }
+  ],
+  "nailBlobsExpected": 5,
+  "variants": [
+    {
+      "file": "01.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "03.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "04.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "05.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "06.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "07.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "08.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "09.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "10.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "11.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "12.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    }
+  ],
+  "pass": true
+}

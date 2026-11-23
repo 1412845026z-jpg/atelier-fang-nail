@@ -1,0 +1,32 @@
+{
+  "plate": "plate.jpg",
+  "size": [
+    1376,
+    768
+  ],
+  "threshold": 24,
+  "nailBlobs": [
+    {
+      "area": 132323,
+      "box": [
+        955,
+        234,
+        399,
+        449
+      ]
+    }
+  ],
+  "nailBlobsExpected": 1,
+  "variants": [
+    {
+      "file": "card-in-scene.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    }
+  ],
+  "pass": true
+}

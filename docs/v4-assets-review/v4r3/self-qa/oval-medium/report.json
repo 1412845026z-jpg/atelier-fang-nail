@@ -1,0 +1,68 @@
+{
+  "plate": "plate.jpg",
+  "size": [
+    1376,
+    768
+  ],
+  "threshold": 24,
+  "nailBlobs": [
+    {
+      "area": 3925,
+      "box": [
+        769,
+        524,
+        82,
+        69
+      ]
+    },
+    {
+      "area": 2440,
+      "box": [
+        920,
+        322,
+        73,
+        43
+      ]
+    },
+    {
+      "area": 1954,
+      "box": [
+        926,
+        391,
+        63,
+        39
+      ]
+    },
+    {
+      "area": 1947,
+      "box": [
+        837,
+        276,
+        65,
+        37
+      ]
+    },
+    {
+      "area": 986,
+      "box": [
+        677,
+        236,
+        47,
+        26
+      ]
+    }
+  ],
+  "nailBlobsExpected": 5,
+  "variants": [
+    {
+      "file": "shape-oval-medium.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    }
+  ],
+  "pass": true
+}

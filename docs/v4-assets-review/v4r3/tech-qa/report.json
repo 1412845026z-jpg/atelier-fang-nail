@@ -1,0 +1,113 @@
+{
+  "plate": "plate.jpg",
+  "size": [
+    1376,
+    768
+  ],
+  "threshold": 24,
+  "nailBlobs": [
+    {
+      "area": 4253,
+      "box": [
+        767,
+        524,
+        82,
+        75
+      ]
+    },
+    {
+      "area": 2469,
+      "box": [
+        920,
+        322,
+        68,
+        46
+      ]
+    },
+    {
+      "area": 2110,
+      "box": [
+        925,
+        391,
+        63,
+        42
+      ]
+    },
+    {
+      "area": 2099,
+      "box": [
+        836,
+        275,
+        65,
+        40
+      ]
+    },
+    {
+      "area": 1141,
+      "box": [
+        676,
+        235,
+        49,
+        29
+      ]
+    }
+  ],
+  "nailBlobsExpected": 5,
+  "variants": [
+    {
+      "file": "tech-onecolor.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0.01,
+      "ok": true
+    },
+    {
+      "file": "tech-french.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "tech-gradation.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "tech-magnet.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "tech-nuance.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "tech-mirror.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    }
+  ],
+  "pass": true
+}

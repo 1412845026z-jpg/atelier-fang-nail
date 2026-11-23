@@ -1,0 +1,176 @@
+{
+  "plate": "plate.jpg",
+  "size": [
+    1376,
+    768
+  ],
+  "threshold": 24,
+  "nailBlobs": [
+    {
+      "area": 4879,
+      "box": [
+        766,
+        521,
+        88,
+        77
+      ]
+    },
+    {
+      "area": 2860,
+      "box": [
+        916,
+        320,
+        73,
+        49
+      ]
+    },
+    {
+      "area": 2794,
+      "box": [
+        832,
+        271,
+        73,
+        48
+      ]
+    },
+    {
+      "area": 2303,
+      "box": [
+        922,
+        390,
+        66,
+        44
+      ]
+    },
+    {
+      "area": 1533,
+      "box": [
+        673,
+        232,
+        57,
+        34
+      ]
+    }
+  ],
+  "nailBlobsExpected": 5,
+  "variants": [
+    {
+      "file": "01.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "02.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "03.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "04.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "05.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "06.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "07.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "08.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "09.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "10.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "11.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "12.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    },
+    {
+      "file": "petals-on-nails.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    }
+  ],
+  "pass": true
+}

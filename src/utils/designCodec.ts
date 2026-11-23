@@ -1,19 +1,11 @@
-import { getDesignById, getDesignMeta, SITE_CONFIG } from '../config';
-import { CounselingPayload, CounselingShapeId, Lang } from '../types/nail';
+import { SITE_CONFIG } from '../config';
+import { ActiveCardSpec, Lang, SelfSelection } from '../types/nail';
 
-export interface EncodedSelection {
-  designId: string;
-  shape?: CounselingShapeId;
-  lengthLevel?: number;
+export interface DecodedShareState {
+  mode: 'preset' | 'self';
+  presetId?: string;
+  selfSelection?: SelfSelection;
 }
-
-const VALID_SHAPES: CounselingShapeId[] = [
-  'round',
-  'oval',
-  'square-off',
-  'short-almond',
-  'point-soft',
-];
 
 function toBase64Url(str: string): string {
   const bytes = new TextEncoder().encode(str);
@@ -35,141 +27,125 @@ function fromBase64Url(b64: string): string {
   return new TextDecoder().decode(bytes);
 }
 
-/** Encodes v3 design selection (+ optional counseling shape/length) cleanly into ?d=<base64url> */
-export function encodeSelectionToQuery(sel: EncodedSelection): string {
-  const payload: Record<string, unknown> = {
-    v: 3,
-    i: sel.designId,
-  };
-  if (sel.shape) payload.s = sel.shape;
-  if (typeof sel.lengthLevel === 'number') payload.l = sel.lengthLevel;
-  return toBase64Url(JSON.stringify(payload));
+export function formatYen(amount: number): string {
+  return `${SITE_CONFIG.currencySymbol}${amount.toLocaleString('en-US')}`;
 }
 
-export function decodeSelectionFromQuery(encoded: string): EncodedSelection | null {
+export function encodeCardToQuery(spec: ActiveCardSpec): string {
+  if (spec.mode === 'self' && spec.selfSelection) {
+    return toBase64Url(
+      JSON.stringify({
+        v: 4,
+        m: 's',
+        s: spec.selfSelection.shape,
+        l: spec.selfSelection.length,
+        c: spec.selfSelection.colorId,
+        t: spec.selfSelection.technique,
+        a: spec.selfSelection.accent,
+      })
+    );
+  }
+  return toBase64Url(JSON.stringify({ v: 4, m: 'p', i: spec.presetId || '02' }));
+}
+
+export function decodeCardFromQuery(encoded: string): DecodedShareState | null {
   try {
-    const raw = JSON.parse(fromBase64Url(encoded)) as {
-      v?: number;
-      i?: string;
-      s?: string;
-      l?: number;
-    };
-    const id = typeof raw.i === 'string' ? raw.i : '';
-    const matched = SITE_CONFIG.designs.find((d) => d.id === id);
-    if (!matched && id !== 'consult') return null;
-
-    const shape = VALID_SHAPES.includes(raw.s as CounselingShapeId)
-      ? (raw.s as CounselingShapeId)
-      : undefined;
-    const lengthLevel =
-      typeof raw.l === 'number' && raw.l >= 0 && raw.l <= 3 ? Math.round(raw.l) : undefined;
-
-    return {
-      designId: matched ? matched.id : 'consult',
-      shape,
-      lengthLevel,
-    };
+    const raw = JSON.parse(fromBase64Url(encoded)) as Record<string, string | number>;
+    if (raw.m === 's') {
+      return {
+        mode: 'self',
+        selfSelection: {
+          shape: (raw.s as SelfSelection['shape']) || 'oval',
+          length: (raw.l as SelfSelection['length']) || 'short',
+          colorId: String(raw.c || 'c03'),
+          technique: (raw.t as SelfSelection['technique']) || 'onecolor',
+          accent: (raw.a as SelfSelection['accent']) || 'none',
+        },
+      };
+    }
+    const id = String(raw.i || '02');
+    const found = SITE_CONFIG.designs.find((d) => d.id === id);
+    return { mode: 'preset', presetId: found ? found.id : '02' };
   } catch {
     return null;
   }
 }
 
-export function buildShareableDesignUrl(sel: EncodedSelection): string {
-  const encoded = encodeSelectionToQuery(sel);
-  if (typeof window === 'undefined') return `?d=${encoded}#vanity`;
+export function buildShareableUrl(spec: ActiveCardSpec): string {
+  const q = encodeCardToQuery(spec);
+  if (typeof window === 'undefined') return `?d=${q}`;
   const url = new URL(window.location.href);
-  url.searchParams.delete('calibrate');
-  url.searchParams.set('d', encoded);
-  url.hash = 'vanity';
+  url.searchParams.set('d', q);
   return url.toString();
 }
 
-export function formatYen(amount: number): string {
-  return `${SITE_CONFIG.currencySymbol}${amount.toLocaleString('en-US')}`;
+export function buildLineBookingUrl(spec: ActiveCardSpec, lang: Lang): string {
+  const shareUrl = buildShareableUrl(spec);
+  const msg =
+    lang === 'ja'
+      ? `${SITE_CONFIG.brandName}\n${spec.codeNumber}「${spec.title.ja}」（${spec.subtitle.ja} · ${formatYen(spec.priceYen)} / ${spec.durationMin}分）で予約・相談を希望します。\n${shareUrl}`
+      : `${SITE_CONFIG.brandName}\nBooking inquiry for ${spec.codeNumber} "${spec.title.en}" (${spec.subtitle.en} · ${formatYen(spec.priceYen)} / ${spec.durationMin} min).\n${shareUrl}`;
+  const oa = encodeURIComponent(SITE_CONFIG.contact.lineOfficialId);
+  return `https://line.me/R/oaMessage/${oa}/?${encodeURIComponent(msg)}`;
 }
 
-export function buildCounselingMessage(payload: CounselingPayload, lang: Lang): string {
-  const isUndecided = payload.designId === 'consult';
-  const design = isUndecided ? null : getDesignById(payload.designId);
-  const meta = design ? getDesignMeta(design) : null;
-
-  const shapeItem =
-    SITE_CONFIG.counselingUI.shapes.find((s) => s.id === payload.shape) ||
-    SITE_CONFIG.counselingUI.shapes[1];
-  const lengthLabel =
-    SITE_CONFIG.counselingUI.lengthLabels[
-      Math.max(0, Math.min(3, payload.lengthLevel))
-    ][lang];
-
-  const concernLabels = payload.concerns
-    .map((cid) => SITE_CONFIG.counselingUI.concerns.find((c) => c.id === cid)?.label[lang])
-    .filter(Boolean)
-    .join(lang === 'ja' ? '・' : ', ');
-
-  const lifestyleLabel =
-    SITE_CONFIG.counselingUI.lifestyles.find((l) => l.id === payload.lifestyle)?.label[lang] ||
-    SITE_CONFIG.counselingUI.lifestyles[2].label[lang];
-
-  const dateText =
-    !payload.preferredDate || payload.preferredDate === 'undecided'
-      ? SITE_CONFIG.counselingUI.dateUndecided[lang]
-      : payload.preferredDate;
-
-  const designUrl = buildShareableDesignUrl({
-    designId: payload.designId,
-    shape: payload.shape,
-    lengthLevel: payload.lengthLevel,
-  });
-
-  if (lang === 'ja') {
-    const lines = [
-      `${SITE_CONFIG.brandName} 様　デザインの相談です。`,
-      isUndecided
-        ? `デザイン：${SITE_CONFIG.counselingUI.consultUndecided.ja}`
-        : `デザイン：No.${design!.number} ${design!.name.ja}（${meta!.label.ja}・目安 ${formatYen(meta!.priceYen)} / ${meta!.durationMin}分）`,
-      `形・長さ：${shapeItem.label.ja}／${lengthLabel}`,
-      `お爪のお悩み：${concernLabels || '特になし'}`,
-      `普段の生活：${lifestyleLabel}`,
-      `ご希望日：${dateText}`,
-      `お名前：${payload.guestName.trim() || '未記入'}`,
-    ];
-    if (payload.note.trim()) {
-      lines.push(`メモ：${payload.note.trim()}`);
-    }
-    lines.push(`デザインURL：${designUrl}`);
-    return lines.join('\n');
-  }
-
-  const lines = [
-    `Hello ${SITE_CONFIG.brandName}, I'd love to consult on a nail look.`,
-    isUndecided
-      ? `Design: ${SITE_CONFIG.counselingUI.consultUndecided.en}`
-      : `Design: No.${design!.number} ${design!.name.ja} / ${design!.name.en} (${meta!.label.en}, est. ${formatYen(meta!.priceYen)} · ${meta!.durationMin} min)`,
-    `Shape & Length: ${shapeItem.label.en} / ${lengthLabel}`,
-    `Nail concerns: ${concernLabels || 'None'}`,
-    `Lifestyle: ${lifestyleLabel}`,
-    `Preferred date: ${dateText}`,
-    `Name: ${payload.guestName.trim() || '—'}`,
-  ];
-  if (payload.note.trim()) {
-    lines.push(`Note: ${payload.note.trim()}`);
-  }
-  lines.push(`Design link: ${designUrl}`);
-  return lines.join('\n');
+export function buildOrdermadeLineUrl(spec: ActiveCardSpec, lang: Lang): string {
+  const msg =
+    lang === 'ja'
+      ? `${SITE_CONFIG.brandName}\nオーダーメイドの相談を希望します（参考カード：${spec.codeNumber} ${spec.title.ja}）。`
+      : `${SITE_CONFIG.brandName}\nI would like a bespoke order-made consultation (ref: ${spec.codeNumber} ${spec.title.en}).`;
+  const oa = encodeURIComponent(SITE_CONFIG.contact.lineOfficialId);
+  return `https://line.me/R/oaMessage/${oa}/?${encodeURIComponent(msg)}`;
 }
 
-export function buildLineOaUrl(message: string): string {
-  const id = encodeURIComponent(SITE_CONFIG.contact.lineOfficialId);
-  return `https://line.me/R/oaMessage/${id}/?${encodeURIComponent(message)}`;
+export interface DesktopCardSceneLayout {
+  scale: number;
+  rw: number;
+  rh: number;
+  baseLeft: number;
+  baseTop: number;
+  openLeft: number;
+  cardCx: number;
+  cardCy: number;
+  cardAngleDeg: number;
+  ordermadeCx: number;
+  ordermadeCy: number;
 }
 
-export function buildInstagramDmUrl(): string {
-  return `https://ig.me/m/${SITE_CONFIG.contact.instagramHandle}`;
+/**
+ * Exact viewport projection of the real photographed blank cotton card in `card-in-scene.jpg` (1376x768).
+ * When the card opens on desktop, horizontal alignment glides smoothly from centered (`baseLeft`)
+ * to right-aligned (`vw - rw`) so all four fine gold-foil corners + oak margin stay 100% inside the frame
+ * with zero blank borders at any aspect ratio (16:10, 16:9, 21:9).
+ */
+export function computeDesktopCardSceneLayout(vw: number, vh: number): DesktopCardSceneLayout {
+  const refW = SITE_CONFIG.media.refWidth;
+  const refH = SITE_CONFIG.media.refHeight;
+  const scale = Math.max(vw / refW, vh / refH);
+  const rw = refW * scale;
+  const rh = refH * scale;
+  const baseLeft = (vw - rw) / 2;
+  const baseTop = (vh - rh) / 2;
+  const openLeft = vw - rw;
+
+  return {
+    scale,
+    rw,
+    rh,
+    baseLeft,
+    baseTop,
+    openLeft,
+    cardCx: openLeft + 1156.5 * scale,
+    cardCy: baseTop + 453.5 * scale,
+    cardAngleDeg: 11.15,
+    ordermadeCx: openLeft + 1110 * scale,
+    ordermadeCy: Math.min(vh - 34, baseTop + 706 * scale),
+  };
 }
 
 export async function copyTextToClipboard(text: string): Promise<boolean> {
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+    if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
       return true;
     }

@@ -5,7 +5,7 @@ import { BrandLogo } from './BrandLogo';
 interface HeaderProps {
   lang: Lang;
   onLangChange: (lang: Lang) => void;
-  onNavigate: (sectionId: string) => void;
+  onNavigate: (target: 'vanity' | 'self' | 'salon' | 'card') => void;
 }
 
 const LANG_OPTIONS: { code: Lang; label: string }[] = [
@@ -13,52 +13,36 @@ const LANG_OPTIONS: { code: Lang; label: string }[] = [
   { code: 'en', label: 'EN' },
 ];
 
-/**
- * Refined Japanese beauty top bar:
- * - Strictly 4 verbatim navigation entries: ネイルを選ぶ / デザイン / サロン / 相談・予約
- * - Sheer-milk surface (#F7F1EE) + 1px soft rose hairline once scrolled past hero
- * - Auto-hides gently on scroll down, reappears smoothly on scroll up
- */
-export const Header: React.FC<HeaderProps> = ({
-  lang,
-  onLangChange,
-  onNavigate,
-}) => {
-  const [pastHero, setPastHero] = useState(false);
+export const Header: React.FC<HeaderProps> = ({ lang, onLangChange, onNavigate }) => {
+  const [pastOpening, setPastOpening] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const lastScrollYRef = useRef(0);
+  const lastYRef = useRef(0);
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      const heroThreshold = Math.max(420, window.innerHeight * 0.72);
-      setPastHero(y > heroThreshold);
-
-      const delta = y - lastScrollYRef.current;
-      if (y <= 100) {
-        setHidden(false);
-      } else if (delta > 14 && y > heroThreshold && !mobileMenuOpen) {
-        setHidden(true);
-      } else if (delta < -10) {
-        setHidden(false);
-      }
-      lastScrollYRef.current = y;
+      const threshold = Math.max(320, window.innerHeight * 0.65);
+      setPastOpening(y > threshold);
+      const dy = y - lastYRef.current;
+      if (y <= 80) setHidden(false);
+      else if (dy > 16 && y > threshold && !mobileMenuOpen) setHidden(true);
+      else if (dy < -10) setHidden(false);
+      lastYRef.current = y;
     };
-
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [mobileMenuOpen]);
 
-  const navItems = [
+  const navItems: { id: 'vanity' | 'self' | 'salon' | 'card'; label: string }[] = [
     { id: 'vanity', label: SITE_CONFIG.nav.vanity[lang] },
-    { id: 'tips', label: SITE_CONFIG.nav.designs[lang] },
+    { id: 'self', label: SITE_CONFIG.nav.designs[lang] },
     { id: 'salon', label: SITE_CONFIG.nav.salon[lang] },
-    { id: 'counseling', label: SITE_CONFIG.nav.counseling[lang] },
+    { id: 'card', label: SITE_CONFIG.nav.counseling[lang] },
   ];
 
-  const handleNavClick = (id: string) => {
+  const handleClick = (id: 'vanity' | 'self' | 'salon' | 'card') => {
     setMobileMenuOpen(false);
     onNavigate(id);
   };
@@ -72,22 +56,24 @@ export const Header: React.FC<HeaderProps> = ({
       }}
     >
       <div
-        className="px-5 sm:px-8 lg:px-14 h-[58px] flex items-center justify-between"
+        className="px-5 sm:px-8 lg:px-14 h-[56px] flex items-center justify-between"
         style={{
           backgroundColor:
-            pastHero || mobileMenuOpen ? 'rgba(247, 241, 238, 0.96)' : 'transparent',
+            pastOpening || mobileMenuOpen ? 'rgba(247, 241, 238, 0.88)' : 'transparent',
+          backdropFilter: pastOpening || mobileMenuOpen ? 'blur(10px)' : 'none',
           borderBottom:
-            pastHero || mobileMenuOpen
-              ? '1px solid rgba(59, 43, 44, 0.09)'
+            pastOpening || mobileMenuOpen
+              ? '1px solid rgba(59, 43, 44, 0.08)'
               : '1px solid transparent',
           transition: 'background-color 0.4s ease, border-color 0.4s ease',
         }}
       >
         <a
-          href="#hero"
+          href="#top"
           onClick={(e) => {
             e.preventDefault();
-            handleNavClick('hero');
+            setMobileMenuOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="no-underline"
           aria-label={SITE_CONFIG.brandName}
@@ -95,30 +81,22 @@ export const Header: React.FC<HeaderProps> = ({
           <BrandLogo size="sm" />
         </a>
 
-        {/* Desktop 4 verbatim links */}
         <nav aria-label="Primary" className="hidden md:flex items-center gap-8 lg:gap-10">
           {navItems.map((item) => (
-            <a
+            <button
               key={item.id}
-              href={`#${item.id}`}
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavClick(item.id);
-              }}
-              className="text-[12.5px] tracking-[0.12em] font-body no-underline transition-colors duration-300 hover:text-[#C9989A]"
+              type="button"
+              onClick={() => handleClick(item.id)}
+              className="bg-transparent border-0 p-0 text-[12.5px] tracking-[0.12em] font-body cursor-pointer transition-colors duration-300 hover:text-[#C9989A]"
               style={{ color: '#3B2B2C' }}
             >
               {item.label}
-            </a>
+            </button>
           ))}
         </nav>
 
-        {/* Right: JP/EN switcher + subtle mobile menu button */}
-        <div className="flex items-center gap-4 sm:gap-5">
-          <div
-            className="flex items-center gap-2 font-num text-[12px]"
-            aria-label="Language switch"
-          >
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 font-num text-[11.5px]" aria-label="Language">
             {LANG_OPTIONS.map((item, idx) => {
               const active = lang === item.code;
               return (
@@ -126,16 +104,15 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     type="button"
                     onClick={() => onLangChange(item.code)}
-                    className="bg-transparent border-0 p-0 cursor-pointer transition-colors duration-300"
+                    className="bg-transparent border-0 p-0 cursor-pointer"
                     style={{
                       color: active ? '#3B2B2C' : '#7E6B6C',
                       borderBottom: active ? '1px solid #C9989A' : '1px solid transparent',
-                      paddingBottom: '1px',
                     }}
                   >
                     {item.label}
                   </button>
-                  {idx === 0 && <span className="text-[#7E6B6C]/45">/</span>}
+                  {idx === 0 && <span className="text-[#7E6B6C]/40">/</span>}
                 </React.Fragment>
               );
             })}
@@ -164,26 +141,20 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Minimal mobile dropdown */}
       {mobileMenuOpen && (
         <nav
           aria-label="Mobile navigation"
           className="md:hidden px-6 py-5 flex flex-col gap-4 border-b border-[#3B2B2C]/10"
-          style={{ backgroundColor: '#F7F1EE' }}
+          style={{ backgroundColor: 'rgba(247, 241, 238, 0.97)' }}
         >
-          {navItems.map((item, idx) => (
+          {navItems.map((item) => (
             <button
               key={item.id}
               type="button"
-              onClick={() => handleNavClick(item.id)}
-              className="bg-transparent border-0 p-0 text-left flex items-baseline gap-3 cursor-pointer"
+              onClick={() => handleClick(item.id)}
+              className="bg-transparent border-0 p-0 text-left font-mincho text-[15.5px] tracking-[0.08em] text-[#3B2B2C] cursor-pointer"
             >
-              <span className="font-num text-[12px] text-[#C7A97F]">
-                0{idx + 1}
-              </span>
-              <span className="font-mincho text-[16px] tracking-[0.08em] text-[#3B2B2C]">
-                {item.label}
-              </span>
+              {item.label}
             </button>
           ))}
         </nav>

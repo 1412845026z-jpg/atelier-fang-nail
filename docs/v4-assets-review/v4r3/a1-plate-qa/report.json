@@ -1,0 +1,32 @@
+{
+  "plate": "plate.jpg",
+  "size": [
+    1376,
+    768
+  ],
+  "threshold": 24,
+  "nailBlobs": [
+    {
+      "area": 16488,
+      "box": [
+        212,
+        79,
+        184,
+        130
+      ]
+    }
+  ],
+  "nailBlobsExpected": 1,
+  "variants": [
+    {
+      "file": "plate.jpg",
+      "shift": [
+        0,
+        0
+      ],
+      "changedOutsideNails": 0,
+      "ok": true
+    }
+  ],
+  "pass": true
+}

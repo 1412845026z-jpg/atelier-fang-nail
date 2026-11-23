@@ -1,12 +1,17 @@
 import {
-  CareMenuItem,
-  CounselingShapeId,
+  ActiveCardSpec,
   FingerMaskCalibration,
   Lang,
   LocalizedText,
   MenuCategoryMeta,
   NailCategoryId,
   NailDesignItem,
+  SelfAccentOption,
+  SelfColorOption,
+  SelfLengthId,
+  SelfSelection,
+  SelfShapeId,
+  SelfTechniqueOption,
 } from './types/nail';
 
 export type { Lang, LocalizedText };
@@ -15,17 +20,8 @@ export const SITE_CONFIG = {
   brandName: 'soū nail atelier',
   brandShort: 'soū',
   artistName: 'Fang',
-  city: {
-    ja: '東京都目黒区青葉台',
-    en: 'Aobadai, Meguro-ku, Tokyo',
-  },
-
-  /** Single currency across the entire site — JPY only */
-  currencyCode: 'JPY',
   currencySymbol: '¥',
-  priceRangeLabel: '¥6,000–¥9,000',
 
-  /** Japanese luxury beauty palette (v3) */
   colors: {
     background: '#F7F1EE',
     surface: '#EFE3DE',
@@ -37,20 +33,18 @@ export const SITE_CONFIG = {
   },
 
   media: {
-    heroBudStatic: '/media/hero-bud-static.webp',
-    heroBudStaticMobile: '/media/hero-bud-static-880.webp',
-    handBase: '/media/hands/base.webp',
-    handBaseMobile: '/media/hands/base-800.webp',
-    handWidth: 1200,
-    handHeight: 896,
+    refWidth: 1376,
+    refHeight: 768,
+    masterAspectW: 1376,
+    masterAspectH: 2344,
+    nailsMaskWebp: '/media/v4/web/nails-mask-1600.webp',
+    clearBottleWebp: '/media/v4/bottles/clear.webp',
+    milkyRefBottleWebp: '/media/v4/bottles/milky-ref.webp',
+    bottleCavityMask: '/media/v4/bottles/cavity-mask.png',
     salonHands: '/media/salon/hands.webp',
     salonHandsMobile: '/media/salon/hands-720.webp',
-    salonSpace: '/media/salon/space.webp',
-    salonSpaceMobile: '/media/salon/space-720.webp',
-    ogImage: '/media/og-card.jpg',
   },
 
-  /** Placeholder Tokyo salon contact details — edit here before launch */
   contact: {
     lineOfficialId: '@sou.aobadai',
     instagramHandle: 'sou.nail.tokyo',
@@ -59,102 +53,98 @@ export const SITE_CONFIG = {
       en: '1-18-7-2F Aobadai, Meguro-ku, Tokyo',
     },
     stationNote: {
-      ja: '東急東横線 中目黒駅より徒歩 7 分',
-      en: '7 min walk from Nakameguro Sta.',
+      ja: '中目黒駅 徒歩 7 分',
+      en: '7 min from Nakameguro Sta.',
     },
-    postalCode: '153-0042',
     mapsUrl: 'https://maps.google.com/?q=Aobadai+Meguro-ku+Tokyo',
     hours: {
-      ja: '火–土 10:00–19:00（日・月定休）',
-      en: 'Tue–Sat 10:00–19:00 (Closed Sun & Mon)',
+      ja: '火–土 10:00–19:00',
+      en: 'Tue–Sat 10:00–19:00',
     },
-    openingHoursSchema: 'Tu-Sa 10:00-19:00',
   },
 
-  /** Top bar — strictly 4 entries matching spec verbatim */
+  /** Strictly 4 allowed top-bar navigation labels */
   nav: {
     vanity: { ja: 'ネイルを選ぶ', en: 'Try On' },
-    designs: { ja: 'デザイン', en: 'Designs' },
+    designs: { ja: 'デザイン', en: 'Self Design' },
     salon: { ja: 'サロン', en: 'Salon' },
-    counseling: { ja: '相談・予約', en: 'Consult' },
+    counseling: { ja: '相談・予約', en: 'Book' },
   },
 
-  /** Hero copy — verbatim Japanese per UI specification */
-  hero: {
-    guide: {
+  /** Strictly ≤ 3 poetic short lines across the entire site (Grok §6) */
+  poetry: {
+    opening: {
       ja: 'ひらいてみてください。',
-      en: 'Gently open the petals.',
+      en: 'Let the petals unfold.',
     },
-    revealedHeadline: {
+    landed: {
       ja: '花びらが、指先に。',
       en: 'Petals, resting on your fingertips.',
     },
-    primaryCta: { ja: 'ネイルを選ぶ', en: 'Choose Nails' },
-    secondaryCta: { ja: '相談する', en: 'Consult' },
-    replay: { ja: 'もう一度', en: 'Replay' },
-    defaultRevealDesignId: '01',
+    ordermadeAfterCard: {
+      ja: 'もっと、あなただけの一枚を。',
+      en: 'Or craft a one-of-a-kind set together.',
+    },
+    primaryAction: {
+      ja: 'ネイルを選ぶ',
+      en: 'Choose Nails',
+    },
   },
 
-  /** Verified sub-pixel nail masks for /media/hands/base.webp (1200 × 896) — tweakable via ?calibrate */
+  /** Exact 5 fingernail capsules in 1376×768 plate coordinates (verified against hands-qa/report.json) */
   fingerCalibrations: [
     {
       index: 0,
       id: 'pinky',
       label: { ja: '小指', en: 'Pinky' },
-      cx: 601,
-      cy: 266,
-      rx: 16,
+      cx: 702,
+      cy: 248.5,
+      rx: 20,
       ry: 31,
-      angleDeg: 51,
-      featherPx: 5.5,
+      angleDeg: 76,
     },
     {
       index: 1,
       id: 'ring',
       label: { ja: '薬指', en: 'Ring' },
-      cx: 735,
-      cy: 261,
-      rx: 21,
-      ry: 38,
-      angleDeg: 47,
-      featherPx: 6,
+      cx: 869.5,
+      cy: 294.5,
+      rx: 26,
+      ry: 40,
+      angleDeg: 84,
     },
     {
       index: 2,
       id: 'middle',
       label: { ja: '中指', en: 'Middle' },
-      cx: 817,
-      cy: 280,
-      rx: 23,
-      ry: 39,
-      angleDeg: 47,
-      featherPx: 6,
+      cx: 953.5,
+      cy: 344,
+      rx: 27,
+      ry: 40,
+      angleDeg: 88,
     },
     {
       index: 3,
       id: 'index',
       label: { ja: '人差し指', en: 'Index' },
-      cx: 840,
-      cy: 371,
-      rx: 21,
-      ry: 40,
-      angleDeg: 52,
-      featherPx: 6,
+      cx: 956,
+      cy: 412.5,
+      rx: 24,
+      ry: 36,
+      angleDeg: 94,
     },
     {
       index: 4,
       id: 'thumb',
       label: { ja: '親指', en: 'Thumb' },
-      cx: 745,
-      cy: 598,
-      rx: 24,
-      ry: 39,
-      angleDeg: 61,
-      featherPx: 6.5,
+      cx: 809,
+      cy: 560,
+      rx: 33,
+      ry: 48,
+      angleDeg: 56,
     },
   ] as FingerMaskCalibration[],
 
-  /** Menu categories & ¥6,000–¥9,000 pricing (single source of truth) */
   menuCategories: {
     'one-color': {
       id: 'one-color',
@@ -200,423 +190,378 @@ export const SITE_CONFIG = {
     },
   } as Record<NailCategoryId, MenuCategoryMeta>,
 
-  /** Additional care / off items shown inside 「一覧で見る」 & SEO HTML */
-  careMenu: [
-    {
-      id: 'care-clear',
-      categoryLabel: { ja: 'ケア', en: 'Care' },
-      name: { ja: '自爪ケア＆クリアジェル', en: 'Cuticle Care & Clear Gel' },
-      priceYen: 6000,
-      durationMin: 60,
-    },
-    {
-      id: 'care-fill',
-      categoryLabel: { ja: 'ケア・オフ', en: 'Care & Off' },
-      name: { ja: 'フィルイン付替（自店オフ）', en: 'In-salon Fill-in Removal' },
-      priceYen: 0,
-      durationMin: 20,
-    },
-    {
-      id: 'care-sculpt',
-      categoryLabel: { ja: '長さ出し', en: 'Extension' },
-      name: { ja: 'ジェルスカルプ長さ出し（10本）', en: 'Gel Extension (Full Set)' },
-      priceYen: 9000,
-      durationMin: 120,
-    },
-  ] as CareMenuItem[],
-
-  /** 12 Curated Salon Gel Designs — shared 1-to-1 across Vanity Tray & 3D チップ見本 */
+  /** 12 Curated Preset Gel Designs (02 = plate default revealed from the ranunculus petals) */
   designs: [
     {
       id: '01',
       number: '01',
       name: { ja: 'ちゅるんミルクベージュ', en: 'Churun Milk Beige' },
       categoryId: 'one-color',
-      shape: 'short-round',
-      liquidHex: '#EAD8C8',
-      shimmerHex: '#FFF8F2',
+      liquidHex: '#EAE2DC',
+      shimmerHex: '#FFFFFF',
       isSheer: true,
-      capFinish: 'champagne-gold',
       opticalEffect: 'none',
-      handImage: '/media/hands/01.webp',
-      tipImage: '/media/tips/01-uv.webp',
-      note: {
-        ja: '肌になじむ透け感と、みずみずしい艶。',
-        en: 'Sheer milky warmth with plump liquid shine.',
-      },
+      bottleWebp: '/media/v4/bottles/01.webp',
+      bottlePng: '/media/v4/bottles/01.png',
+      handWebBase: '/media/v4/web/hands/01',
     },
     {
       id: '02',
       number: '02',
-      name: { ja: 'くすみピンク', en: 'Dusty Rose Pink' },
+      name: { ja: 'くすみピンク', en: 'Kusumi Rose Pink' },
       categoryId: 'one-color',
-      shape: 'short-oval',
-      liquidHex: '#B67B84',
+      liquidHex: '#B06F7B',
       shimmerHex: '#E8C5CA',
       isSheer: false,
-      capFinish: 'champagne-gold',
       opticalEffect: 'none',
-      handImage: '/media/hands/02.webp',
-      tipImage: '/media/tips/02-uv.webp',
-      note: {
-        ja: '甘さを抑えた大人のローズトーン。',
-        en: 'Muted dusty rose with refined creaminess.',
-      },
+      bottleWebp: '/media/v4/bottles/02.webp',
+      bottlePng: '/media/v4/bottles/02.png',
+      handWebBase: '/media/v4/web/hands/02',
     },
     {
       id: '03',
       number: '03',
       name: { ja: 'マグネット ラベンダー', en: 'Magnet Lavender' },
       categoryId: 'magnet',
-      shape: 'medium-oval',
-      liquidHex: '#9C8EA8',
-      shimmerHex: '#E5DCFA',
+      liquidHex: '#9C8EB0',
+      shimmerHex: '#EAE2FF',
       isSheer: false,
-      capFinish: 'champagne-gold',
       opticalEffect: 'magnet',
-      handImage: '/media/hands/03.webp',
-      tipImage: '/media/tips/03-uv.webp',
-      note: {
-        ja: '傾けるたび光の帯がゆらぐベルベット艶。',
-        en: 'Silky diagonal lavender cat-eye light band.',
-      },
+      bottleWebp: '/media/v4/bottles/03.webp',
+      bottlePng: '/media/v4/bottles/03.png',
+      handWebBase: '/media/v4/web/hands/03',
     },
     {
       id: '04',
       number: '04',
       name: { ja: 'ミラーフレンチ', en: 'Mirror French' },
       categoryId: 'french',
-      shape: 'short-square-off',
-      liquidHex: '#E4CEC4',
-      shimmerHex: '#E2E6EC',
+      liquidHex: '#DEC7BA',
+      shimmerHex: '#E8EDF2',
       isSheer: true,
-      capFinish: 'champagne-gold',
       opticalEffect: 'mirror',
-      handImage: '/media/hands/04.webp',
-      tipImage: '/media/tips/04-uv.webp',
-      note: {
-        ja: '素肌ベースに繊細なシルバーミラーの縁取り。',
-        en: 'Sheer nude base with slender silver chrome tips.',
-      },
+      bottleWebp: '/media/v4/bottles/04.webp',
+      bottlePng: '/media/v4/bottles/04.png',
+      handWebBase: '/media/v4/web/hands/04',
     },
     {
       id: '05',
       number: '05',
-      name: { ja: '極細フレンチ', en: 'Micro French' },
+      name: { ja: '極細フレンチ', en: 'Micro White French' },
       categoryId: 'french',
-      shape: 'short-round',
-      liquidHex: '#ECCED0',
+      liquidHex: '#E8C6CA',
       shimmerHex: '#FFFFFF',
       isSheer: true,
-      capFinish: 'champagne-gold',
       opticalEffect: 'none',
-      handImage: '/media/hands/05.webp',
-      tipImage: '/media/tips/05-uv.webp',
-      note: {
-        ja: '指先をすっきり整える、極細の白ライン。',
-        en: 'Hairline white edge over sheer rosy pink.',
-      },
+      bottleWebp: '/media/v4/bottles/05.webp',
+      bottlePng: '/media/v4/bottles/05.png',
+      handWebBase: '/media/v4/web/hands/05',
     },
     {
       id: '06',
       number: '06',
       name: { ja: 'ニュアンスマーブル', en: 'Nuance Marble' },
       categoryId: 'nuance',
-      shape: 'medium-oval',
-      liquidHex: '#CFC4BC',
+      liquidHex: '#CBC0B7',
       shimmerHex: '#D8B77C',
       isSheer: true,
-      capFinish: 'champagne-gold',
-      opticalEffect: 'none',
-      handImage: '/media/hands/06.webp',
-      tipImage: '/media/tips/06-uv.webp',
-      note: {
-        ja: '乳白とグレージュの奥に、わずかな金箔。',
-        en: 'Misty greige marble with delicate encased gold foil.',
-      },
+      opticalEffect: 'glitter',
+      bottleWebp: '/media/v4/bottles/06.webp',
+      bottlePng: '/media/v4/bottles/06.png',
+      handWebBase: '/media/v4/web/hands/06',
     },
     {
       id: '07',
       number: '07',
       name: { ja: 'うる艶ボルドー', en: 'Glossy Bordeaux' },
       categoryId: 'one-color',
-      shape: 'medium-round',
-      liquidHex: '#631727',
-      shimmerHex: '#C25268',
+      liquidHex: '#5C1624',
+      shimmerHex: '#B84B60',
       isSheer: false,
-      capFinish: 'deep-bordeaux',
       opticalEffect: 'none',
-      handImage: '/media/hands/07.webp',
-      tipImage: '/media/tips/07-uv.webp',
-      note: {
-        ja: '深みと透け感を重ねた、果実のような艶。',
-        en: 'Translucent cherry-bordeaux with glass-like depth.',
-      },
+      bottleWebp: '/media/v4/bottles/07.webp',
+      bottlePng: '/media/v4/bottles/07.png',
+      handWebBase: '/media/v4/web/hands/07',
     },
     {
       id: '08',
       number: '08',
       name: { ja: 'シアーグレージュ', en: 'Sheer Greige' },
       categoryId: 'one-color',
-      shape: 'short-oval',
-      liquidHex: '#B8ACA6',
-      shimmerHex: '#E5DDD8',
+      liquidHex: '#9E948E',
+      shimmerHex: '#DDD6D1',
       isSheer: true,
-      capFinish: 'champagne-gold',
       opticalEffect: 'none',
-      handImage: '/media/hands/08.webp',
-      tipImage: '/media/tips/08-uv.webp',
-      note: {
-        ja: '手元を静かに引き立てる透明グレージュ。',
-        en: 'Quiet watery taupe-greige with airy translucency.',
-      },
+      bottleWebp: '/media/v4/bottles/08.webp',
+      bottlePng: '/media/v4/bottles/08.png',
+      handWebBase: '/media/v4/web/hands/08',
     },
     {
       id: '09',
       number: '09',
       name: { ja: 'オーロラパール', en: 'Aurora Pearl' },
       categoryId: 'aurora',
-      shape: 'short-oval',
-      liquidHex: '#EFEAF2',
+      liquidHex: '#ECE6F0',
       shimmerHex: '#F3D6EA',
       isSheer: true,
-      capFinish: 'rose-gold',
       opticalEffect: 'pearl',
-      handImage: '/media/hands/09.webp',
-      tipImage: '/media/tips/09-uv.webp',
-      note: {
-        ja: '白のベールにピンクと淡青のオーロラ光。',
-        en: 'Opalescent pink-to-ice-blue pearl veil.',
-      },
+      bottleWebp: '/media/v4/bottles/09.webp',
+      bottlePng: '/media/v4/bottles/09.png',
+      handWebBase: '/media/v4/web/hands/09',
     },
     {
       id: '10',
       number: '10',
       name: { ja: 'パールパーツ', en: 'Pearl Accent' },
       categoryId: 'parts',
-      shape: 'short-oval',
-      liquidHex: '#F0CFD6',
-      shimmerHex: '#FFF8F0',
+      liquidHex: '#EBC8CF',
+      shimmerHex: '#FFF9F2',
       isSheer: true,
-      capFinish: 'rose-gold',
       opticalEffect: 'pearl',
-      handImage: '/media/hands/10.webp',
-      tipImage: '/media/tips/10-uv.webp',
-      note: {
-        ja: 'シアーピンクに、薬指だけ小さな真珠の粒。',
-        en: 'Sheer pink with miniature pearls on the ring finger only.',
-      },
+      bottleWebp: '/media/v4/bottles/10.webp',
+      bottlePng: '/media/v4/bottles/10.png',
+      handWebBase: '/media/v4/web/hands/10',
     },
     {
       id: '11',
       number: '11',
       name: { ja: 'べっ甲アクセント', en: 'Tortoiseshell Accent' },
       categoryId: 'nuance',
-      shape: 'short-square-off',
-      liquidHex: '#9A5B2C',
-      shimmerHex: '#DFB67E',
+      liquidHex: '#8E4E24',
+      shimmerHex: '#DCB47A',
       isSheer: false,
-      capFinish: 'champagne-gold',
       opticalEffect: 'none',
-      handImage: '/media/hands/11.webp',
-      tipImage: '/media/tips/11-uv.webp',
-      note: {
-        ja: '琥珀のべっ甲を二本だけ。極細の金線を添えて。',
-        en: 'Amber tortoiseshell on two accent nails with fine gold line.',
-      },
+      bottleWebp: '/media/v4/bottles/11.webp',
+      bottlePng: '/media/v4/bottles/11.png',
+      handWebBase: '/media/v4/web/hands/11',
     },
     {
       id: '12',
       number: '12',
-      name: { ja: 'ラメグラデーション', en: 'Glitter Gradation' },
+      name: { ja: 'ラメグラデーション', en: 'Champagne Glitter' },
       categoryId: 'gradation',
-      shape: 'short-almond',
-      liquidHex: '#E5CFC0',
-      shimmerHex: '#E9C992',
+      liquidHex: '#DFC7B3',
+      shimmerHex: '#EBC98E',
       isSheer: true,
-      capFinish: 'champagne-gold',
       opticalEffect: 'glitter',
-      handImage: '/media/hands/12.webp',
-      tipImage: '/media/tips/12-uv.webp',
-      note: {
-        ja: '先端にシャンパンの微粒子を淡く溶かして。',
-        en: 'Fine champagne-gold micro-shimmer melting from the tip.',
-      },
+      bottleWebp: '/media/v4/bottles/12.webp',
+      bottlePng: '/media/v4/bottles/12.png',
+      handWebBase: '/media/v4/web/hands/12',
     },
   ] as NailDesignItem[],
 
-  /** Vanity (Section 02) UI copy — exact 3 corner links per spec */
-  vanityUI: {
-    eyebrow: { ja: '02 — 指先の化粧台', en: '02 — Fingertip Vanity' },
-    dragCue: { ja: 'トレイを回す', en: 'Turn the tray' },
-    imageCaption: { ja: 'イメージ', en: 'Image' },
-    consultThis: { ja: 'このネイルで相談', en: 'Consult this look' },
-    saveImage: { ja: '画像を保存', en: 'Save image' },
-    savedNotice: { ja: '保存しました', en: 'Saved' },
-    viewDetail: { ja: '詳しく見る', en: 'View detail' },
-    shimmerCue: { ja: '指先を動かすと光がゆらぎます', en: 'Move over nails to shift the light' },
-  },
-
-  /** Tip Sample Book (Section 03) UI copy */
-  tipsUI: {
-    eyebrow: { ja: '03 — チップ見本', en: '03 — Gel Tip Archive' },
-    heading: { ja: '指先に、季節をひとつ。', en: 'Twelve Salon Gel Tips' },
-    allLabel: { ja: 'すべて', en: 'All' },
-    dragCue: { ja: 'チップを回して選ぶ', en: 'Rotate to browse' },
-    consultDesign: { ja: 'このデザインで相談', en: 'Consult this design' },
-    tryOnVanity: { ja: '化粧台で試す', en: 'Try on vanity' },
-    viewMenuList: { ja: '一覧で見る', en: 'Full menu list' },
-    closeMenuList: { ja: '閉じる', en: 'Close list' },
-    durationPrefix: { ja: '目安時間', en: 'Est. time' },
-    pricePrefix: { ja: '料金', en: 'Price' },
-    imageCaption: { ja: 'イメージ', en: 'Image' },
-    priceDisclaimer: {
-      ja: '※ 表示価格は税込・目安です。お爪の状態に合わせてカウンセリング時にご案内します。',
-      en: '* Tax included. Final price is confirmed gently during counseling.',
-    },
-  },
-
-  /** Artist & Salon (Section 04) — quiet, airy, hands-only, brief first-person */
-  salon: {
-    eyebrow: { ja: '04 — サロンについて', en: '04 — About the Atelier' },
-    heading: { ja: '静かな光の中で、丁寧なジェルを。', en: 'Quiet daylight, considered gel craft.' },
-    story: {
-      ja: '目黒区青葉台の小さな一室で、お一人ずつ向き合うプライベートサロンを開いています。伸びても美しく、自爪に負担をかけないベースづくりと、光の透け方を大切にしたジェルが得意です。',
-      en: 'Inside a quiet room in Aobadai, Meguro, I welcome one guest at a time. My focus is gentle base structure that grows out gracefully and translucent gel finishes calibrated to natural light.',
-    },
-    credentials: [
-      { ja: 'JNEC ネイリスト技能検定 1級', en: 'JNEC Nailist Certification Level 1' },
-      { ja: 'JNA ジェルネイル技能検定 上級', en: 'JNA Gel Nail Certification Advanced' },
-      { ja: '完全予約制 · 一対一 · 器具滅菌管理', en: 'Private Appointment · 1-on-1 · Sterilized Tools' },
-    ],
-  },
-
-  /** Counseling Card (Section 05) — tactile cream paper stationery */
-  counselingUI: {
-    eyebrow: { ja: '05 — カウンセリングカード', en: '05 — Counseling Card' },
-    reassurance: {
-      ja: '迷ったら、まず相談だけでも。',
-      en: 'Even if you are undecided, feel free to just ask.',
-    },
-    consultUndecided: {
-      ja: '相談して決めたい',
-      en: 'Decide together',
-    },
-    next: { ja: '次へ', en: 'Next' },
-    prev: { ja: '戻る', en: 'Back' },
-    steps: [
-      {
-        num: '01',
-        question: { ja: '気になっているデザインはありますか？', en: 'Which look caught your eye?' },
-      },
-      {
-        num: '02',
-        question: { ja: 'ご希望の形と長さを教えてください。', en: 'Preferred shape and length?' },
-      },
-      {
-        num: '03',
-        question: { ja: 'お爪のお悩みはありますか？', en: 'Any concerns with your natural nails?' },
-      },
-      {
-        num: '04',
-        question: { ja: '普段の過ごし方に近いものは？', en: 'How do you use your fingertips day-to-day?' },
-      },
-      {
-        num: '05',
-        question: { ja: 'ご希望のお日にちはありますか？', en: 'Do you have a preferred date?' },
-      },
-      {
-        num: '06',
-        question: { ja: 'お名前とご連絡先を教えてください。', en: 'Your name & preferred contact?' },
-      },
-    ],
+  /** セルフデザイン (Mid-tier custom atelier experience) */
+  selfDesign: {
+    basePriceYen: 7000,
+    baseDurationMin: 80,
+    entryLabel: { ja: 'セルフデザイン', en: 'Self Design' },
     shapes: [
-      { id: 'round' as CounselingShapeId, label: { ja: 'ラウンド', en: 'Round' } },
-      { id: 'oval' as CounselingShapeId, label: { ja: 'オーバル', en: 'Oval' } },
-      { id: 'square-off' as CounselingShapeId, label: { ja: 'スクエアオフ', en: 'Square-off' } },
-      { id: 'short-almond' as CounselingShapeId, label: { ja: 'アーモンド', en: 'Short Almond' } },
-      { id: 'point-soft' as CounselingShapeId, label: { ja: 'ソフトポイント', en: 'Soft Taper' } },
+      { id: 'round' as SelfShapeId, label: { ja: 'ラウンド', en: 'Round' } },
+      { id: 'oval' as SelfShapeId, label: { ja: 'オーバル', en: 'Oval' } },
+      { id: 'square' as SelfShapeId, label: { ja: 'スクエアオフ', en: 'Square-off' } },
     ],
-    lengthLabels: [
-      { ja: '自爪そのまま（0mm）', en: 'Natural (0 mm)' },
-      { ja: 'ショート（+1mm）', en: 'Short (+1 mm)' },
-      { ja: 'ショート〜ミディアム（+2mm）', en: 'Short–Medium (+2 mm)' },
-      { ja: 'ミディアム（+3mm）', en: 'Medium (+3 mm)' },
+    lengths: [
+      { id: 'short' as SelfLengthId, label: { ja: 'ショート', en: 'Short' }, priceDelta: 0 },
+      { id: 'medium' as SelfLengthId, label: { ja: 'ミディアム', en: 'Medium' }, priceDelta: 300 },
+      { id: 'long' as SelfLengthId, label: { ja: 'ロング', en: 'Long' }, priceDelta: 600 },
     ],
-    concerns: [
-      { id: 'thin', label: { ja: '薄い', en: 'Thin' } },
-      { id: 'brittle', label: { ja: '割れやすい', en: 'Splits easily' } },
-      { id: 'peeling', label: { ja: '二枚爪', en: 'Peeling' } },
-      { id: 'short', label: { ja: '自爪が短い', en: 'Short nail bed' } },
-      { id: 'none', label: { ja: '特になし', en: 'None' } },
-    ],
-    lifestyles: [
-      { id: 'office', label: { ja: 'オフィス向け', en: 'Office-friendly' } },
-      { id: 'active', label: { ja: '指先をよく使う', en: 'Active hands' } },
-      { id: 'none', label: { ja: '特になし', en: 'No restrictions' } },
-    ],
-    dateUndecided: { ja: '未定（相談して決める）', en: 'Undecided' },
-    namePlaceholder: { ja: 'お名前（ニックネーム可）', en: 'Your name or nickname' },
-    notePlaceholder: {
-      ja: 'オフの有無や気になることなど（任意）',
-      en: 'Removal needed or any notes (optional)',
-    },
-    channelLine: { ja: 'LINE で相談を送る', en: 'Send inquiry via LINE' },
-    channelInstagram: { ja: 'Instagram DM で送る', en: 'Send via Instagram DM' },
-    copyMessage: { ja: 'メッセージをコピー', en: 'Copy message' },
-    copied: { ja: 'コピーしました', en: 'Copied' },
-    igCopiedNotice: {
-      ja: 'メッセージをコピーしました。Instagram DM に貼り付けてお送りください。',
-      en: 'Message copied — paste and send in Instagram DM.',
-    },
-    sendDisclaimer: {
-      ja: '※ この送信で予約確定にはなりません。ネイリストより折り返し空き状況をご案内します。',
-      en: '* Sending this card does not finalize a booking. The artist will reply with availability.',
-    },
+    /** 18 Curated Japanese Kusumi & Sheer Colors */
+    colors: [
+      { id: 'c01', name: { ja: '白磁ミルク', en: 'Porcelain Milk' }, poeticStem: { ja: '白磁の', en: 'Porcelain' }, hex: '#EFEAE5', sheer: true, toneGroup: 'pale' },
+      { id: 'c02', name: { ja: '桜貝シアー', en: 'Shell Sakura' }, poeticStem: { ja: '桜貝の', en: 'Shell Blush' }, hex: '#F0D5D8', sheer: true, toneGroup: 'pale' },
+      { id: 'c03', name: { ja: '霧ばら', en: 'Misty Rose' }, poeticStem: { ja: '霧ばらの', en: 'Misty Rose' }, hex: '#B97C86', sheer: false, toneGroup: 'rose' },
+      { id: 'c04', name: { ja: '灰桜', en: 'Ash Cherry' }, poeticStem: { ja: '灰桜の', en: 'Ash Sakura' }, hex: '#CFA8AE', sheer: true, toneGroup: 'rose' },
+      { id: 'c05', name: { ja: '薄紅ちゅるん', en: 'Sheer Crimson' }, poeticStem: { ja: '薄紅の', en: 'Petal Tint' }, hex: '#D9949E', sheer: true, toneGroup: 'rose' },
+      { id: 'c06', name: { ja: '霞モーブ', en: 'Haze Mauve' }, poeticStem: { ja: '霞モーブの', en: 'Haze Mauve' }, hex: '#9E7B8C', sheer: false, toneGroup: 'rose' },
+      { id: 'c07', name: { ja: '淡藤ラベンダー', en: 'Pale Wisteria' }, poeticStem: { ja: '淡藤の', en: 'Wisteria' }, hex: '#B8ACC9', sheer: true, toneGroup: 'pale' },
+      { id: 'c08', name: { ja: '香木ベージュ', en: 'Incense Beige' }, poeticStem: { ja: '香木の', en: 'Warm Beige' }, hex: '#D8C2B2', sheer: true, toneGroup: 'neutral' },
+      { id: 'c09', name: { ja: '砂色ヌード', en: 'Sand Nude' }, poeticStem: { ja: '砂色の', en: 'Sand Nude' }, hex: '#E3CFC2', sheer: true, toneGroup: 'pale' },
+      { id: 'c10', name: { ja: '胡桃グレージュ', en: 'Walnut Greige' }, poeticStem: { ja: '胡桃の', en: 'Walnut Greige' }, hex: '#A79B93', sheer: true, toneGroup: 'neutral' },
+      { id: 'c11', name: { ja: '焙じ茶シアー', en: 'Hojicha Taupe' }, poeticStem: { ja: '焙じ茶の', en: 'Hojicha' }, hex: '#8C776B', sheer: true, toneGroup: 'neutral' },
+      { id: 'c12', name: { ja: '月白パール', en: 'Moon White' }, poeticStem: { ja: '月白の', en: 'Moon Pearl' }, hex: '#E8E9EE', sheer: true, toneGroup: 'pale' },
+      { id: 'c13', name: { ja: '氷青シアー', en: 'Ice Celadon' }, poeticStem: { ja: '氷青の', en: 'Ice Mist' }, hex: '#CBD6D8', sheer: true, toneGroup: 'pale' },
+      { id: 'c14', name: { ja: '熟柿テラコッタ', en: 'Persimmon Clay' }, poeticStem: { ja: '熟柿の', en: 'Persimmon' }, hex: '#AD5D47', sheer: false, toneGroup: 'deep' },
+      { id: 'c15', name: { ja: '琥珀キャラメル', en: 'Amber Caramel' }, poeticStem: { ja: '琥珀の', en: 'Amber' }, hex: '#9E6438', sheer: true, toneGroup: 'deep' },
+      { id: 'c16', name: { ja: '茜ボルドー', en: 'Madder Bordeaux' }, poeticStem: { ja: '茜色の', en: 'Bordeaux' }, hex: '#631B2B', sheer: false, toneGroup: 'deep' },
+      { id: 'c17', name: { ja: '宵闇プラム', en: 'Evening Plum' }, poeticStem: { ja: '宵闇の', en: 'Deep Plum' }, hex: '#4D2638', sheer: false, toneGroup: 'deep' },
+      { id: 'c18', name: { ja: '金砂シャンパン', en: 'Champagne Sand' }, poeticStem: { ja: '金砂の', en: 'Champagne' }, hex: '#D9C3A8', sheer: true, toneGroup: 'neutral' },
+    ] as SelfColorOption[],
+    techniques: [
+      {
+        id: 'onecolor',
+        label: { ja: 'ワンカラー', en: 'One Color' },
+        poeticSuffix: { ja: 'うる艶ワンカラー', en: 'Gloss Veil' },
+        priceDelta: 0,
+        durationDelta: 0,
+        recommendedTones: ['pale', 'rose', 'neutral', 'deep'],
+      },
+      {
+        id: 'french',
+        label: { ja: 'フレンチ', en: 'French' },
+        poeticSuffix: { ja: '細フレンチ', en: 'Fine French' },
+        priceDelta: 600,
+        durationDelta: 10,
+        recommendedTones: ['pale', 'rose', 'neutral'],
+      },
+      {
+        id: 'gradation',
+        label: { ja: 'グラデーション', en: 'Gradation' },
+        poeticSuffix: { ja: '霞グラデーション', en: 'Soft Ombre' },
+        priceDelta: 500,
+        durationDelta: 10,
+        recommendedTones: ['pale', 'rose', 'neutral'],
+      },
+      {
+        id: 'magnet',
+        label: { ja: 'マグネット', en: 'Magnet' },
+        poeticSuffix: { ja: '光帯マグネット', en: 'Velvet Magnet' },
+        priceDelta: 800,
+        durationDelta: 10,
+        recommendedTones: ['rose', 'neutral', 'deep', 'pale'],
+      },
+      {
+        id: 'nuance',
+        label: { ja: 'ニュアンス', en: 'Nuance' },
+        poeticSuffix: { ja: '箔ニュアンス', en: 'Foil Nuance' },
+        priceDelta: 1000,
+        durationDelta: 15,
+        recommendedTones: ['pale', 'neutral', 'rose'],
+      },
+      {
+        id: 'mirror',
+        label: { ja: 'ミラー', en: 'Mirror' },
+        poeticSuffix: { ja: '水鏡ミラー', en: 'Liquid Mirror' },
+        priceDelta: 800,
+        durationDelta: 10,
+        recommendedTones: ['pale', 'neutral', 'rose'],
+      },
+    ] as SelfTechniqueOption[],
+    accents: [
+      {
+        id: 'none',
+        label: { ja: 'なし', en: 'None' },
+        priceDelta: 0,
+        durationDelta: 0,
+        compatibleTechniques: ['onecolor', 'french', 'gradation', 'magnet', 'nuance', 'mirror'],
+      },
+      {
+        id: 'pearl',
+        label: { ja: 'パール', en: 'Pearl' },
+        priceDelta: 500,
+        durationDelta: 5,
+        cutoutWebp: '/media/v4/self/accent-pearl.webp',
+        compatibleTechniques: ['onecolor', 'french', 'gradation', 'magnet'],
+      },
+      {
+        id: 'glitter',
+        label: { ja: 'ラメ', en: 'Glitter' },
+        priceDelta: 400,
+        durationDelta: 5,
+        cutoutWebp: '/media/v4/self/accent-glitter.webp',
+        compatibleTechniques: ['onecolor', 'gradation', 'nuance'],
+      },
+      {
+        id: 'stone',
+        label: { ja: 'ストーン', en: 'Crystal' },
+        priceDelta: 500,
+        durationDelta: 5,
+        cutoutWebp: '/media/v4/self/accent-stone.webp',
+        compatibleTechniques: ['onecolor', 'french', 'gradation', 'magnet'],
+      },
+      {
+        id: 'goldline',
+        label: { ja: 'ゴールドライン', en: 'Gold Line' },
+        priceDelta: 400,
+        durationDelta: 5,
+        cutoutWebp: '/media/v4/self/accent-goldline.webp',
+        compatibleTechniques: ['onecolor', 'french', 'nuance', 'gradation'],
+      },
+    ] as SelfAccentOption[],
   },
 
-  /** Placeholder FAQ items (also emitted as JSON-LD FAQPage) */
-  faqs: [
-    {
-      q: { ja: 'オフ料金はかかりますか？', en: 'Is gel removal charged separately?' },
-      a: {
-        ja: '自店ジェルの付替オフ（フィルイン）は無料でご案内しております。他店オフは +¥1,000 目安となります。',
-        en: 'In-salon fill-in removal is complimentary. Removal from another salon is approx. +¥1,000.',
-      },
-    },
-    {
-      q: { ja: 'どのくらい持ちますか？', en: 'How long does the gel manicure last?' },
-      a: {
-        ja: 'お爪の状態や生活環境によりますが、目安として 3〜4 週間ほど美しい艶をお楽しみいただけます。',
-        en: 'Typically 3 to 4 weeks depending on nail condition and daily routine.',
-      },
-    },
-    {
-      q: { ja: '予約の変更・キャンセルについて', en: 'Rescheduling & cancellation' },
-      a: {
-        ja: '前日の 18:00 までに LINE または Instagram DM にてご連絡ください。',
-        en: 'Please message via LINE or Instagram DM by 18:00 the day prior.',
-      },
-    },
-    {
-      q: { ja: 'お支払い方法', en: 'Payment methods' },
-      a: {
-        ja: '現金・クレジットカード・各種交通系 IC / QR 決済に対応しております。',
-        en: 'Cash, major credit cards, and IC / QR payments accepted.',
-      },
-    },
-  ],
-
-  footer: {
-    openMaps: { ja: 'Google Maps ↗', en: 'Google Maps ↗' },
-    faqHeading: { ja: 'よくあるご質問', en: 'FAQ' },
+  cardActions: {
+    save: { ja: '保存', en: 'Save' },
+    saved: { ja: '保存済', en: 'Saved' },
+    share: { ja: 'シェア', en: 'Share' },
+    copied: { ja: 'コピー済', en: 'Copied' },
+    lineBook: { ja: 'LINE で予約', en: 'Book via LINE' },
+    imageTag: { ja: 'イメージ', en: 'Image' },
   },
 };
 
 export function getDesignById(id: string): NailDesignItem {
-  return SITE_CONFIG.designs.find((d) => d.id === id) || SITE_CONFIG.designs[0];
+  return SITE_CONFIG.designs.find((d) => d.id === id) || SITE_CONFIG.designs[1];
 }
 
-export function getDesignMeta(design: NailDesignItem) {
+export function getDesignMeta(design: NailDesignItem): MenuCategoryMeta {
   return SITE_CONFIG.menuCategories[design.categoryId];
+}
+
+export function buildPresetCardSpec(design: NailDesignItem): ActiveCardSpec {
+  const meta = getDesignMeta(design);
+  return {
+    mode: 'preset',
+    codeNumber: `No.${design.number}`,
+    title: design.name,
+    subtitle: meta.label,
+    priceYen: meta.priceYen,
+    durationMin: meta.durationMin,
+    swatchHex: design.liquidHex,
+    presetId: design.id,
+  };
+}
+
+export function buildSelfCardSpec(sel: SelfSelection): ActiveCardSpec {
+  const color =
+    SITE_CONFIG.selfDesign.colors.find((c) => c.id === sel.colorId) ||
+    SITE_CONFIG.selfDesign.colors[2];
+  const lengthOpt =
+    SITE_CONFIG.selfDesign.lengths.find((l) => l.id === sel.length) ||
+    SITE_CONFIG.selfDesign.lengths[0];
+  const shapeOpt =
+    SITE_CONFIG.selfDesign.shapes.find((s) => s.id === sel.shape) ||
+    SITE_CONFIG.selfDesign.shapes[1];
+  const techOpt =
+    SITE_CONFIG.selfDesign.techniques.find((t) => t.id === sel.technique) ||
+    SITE_CONFIG.selfDesign.techniques[0];
+  const accOpt =
+    SITE_CONFIG.selfDesign.accents.find((a) => a.id === sel.accent) ||
+    SITE_CONFIG.selfDesign.accents[0];
+
+  const rawPrice =
+    SITE_CONFIG.selfDesign.basePriceYen +
+    lengthOpt.priceDelta +
+    techOpt.priceDelta +
+    accOpt.priceDelta;
+  const priceYen = Math.min(9000, Math.max(6000, rawPrice));
+  const durationMin =
+    SITE_CONFIG.selfDesign.baseDurationMin + techOpt.durationDelta + accOpt.durationDelta;
+
+  const hashNum =
+    ((color.id.charCodeAt(2) * 17 +
+      sel.shape.charCodeAt(0) * 7 +
+      sel.technique.charCodeAt(0) * 11 +
+      sel.accent.charCodeAt(0) * 5) %
+      89) +
+    10;
+
+  const accSuffixJa = accOpt.id === 'none' ? '' : ` · ${accOpt.label.ja}`;
+  const accSuffixEn = accOpt.id === 'none' ? '' : ` · ${accOpt.label.en}`;
+
+  return {
+    mode: 'self',
+    codeNumber: `No.S-${hashNum}`,
+    title: {
+      ja: `${color.poeticStem.ja}${techOpt.poeticSuffix.ja}`,
+      en: `${color.poeticStem.en} ${techOpt.poeticSuffix.en}`,
+    },
+    subtitle: {
+      ja: `${shapeOpt.label.ja} · ${lengthOpt.label.ja}${accSuffixJa}`,
+      en: `${shapeOpt.label.en} · ${lengthOpt.label.en}${accSuffixEn}`,
+    },
+    priceYen,
+    durationMin,
+    swatchHex: color.hex,
+    selfSelection: sel,
+  };
 }

@@ -1,5 +1,7 @@
 # soū nail atelier · v4 写实化改版需求书
 
+> ⚠️ **v5 起不再作为要求（2026-11-23）**：请改看 `docs/v5-execute.md` 和 `docs/review-grok-v5-creative-direction.md`。v5 把全站改为艺术创意基调，v4 的写实世界观不再是约束。本文件只作参考：里面的工具、素材脚本和已实现的功能仍可复用。
+
 > 写于 2026-11-22 夜。依据三份材料：
 > 1. 用户当晚的新要求（本文件第 0–2 节）
 > 2. Grok 质量与美术把关的修改单 `docs/review-grok-b8c4078.md`

@@ -41,6 +41,27 @@ npm run assets:setup-upscaler      # 安装 Real-ESRGAN 到 .tools/（不进 git
 
 详细说明见 `scripts/assets/README.md`。
 
+### 1A. 允许使用的库（白名单）
+
+**网站里只能用下面这些库。**要用白名单以外的库，必须在交付报告里写清楚：为什么白名单里的库做不到、新库增加了多少体积。
+
+| 用途 | 允许 |
+|---|---|
+| 页面 | React、React DOM |
+| 动效 | **GSAP**（含 ScrollTrigger、Draggable、InertiaPlugin、Flip，均已免费）、**Lenis** |
+| 构建 | Vite、TypeScript、Tailwind（现有的，不新增） |
+| 素材脚本（开发时用，不进网站） | `sharp`、`ffmpeg-static`、Real-ESRGAN（`.tools/`）、`rembg`（Python，抠图用） |
+| 着色效果（如果需要） | 原生 WebGL，自己写几十行着色器，不引入库 |
+
+**这次要删除**：`three`、`@react-three/fiber`、`@react-three/drei`、`@types/three`、`@use-gesture/react`（拖动和惯性改用 GSAP Draggable + InertiaPlugin）。
+
+**不要引入**（下面这些功能和白名单重复，或者本项目不需要）：
+- anime.js、tween.js：和 GSAP 功能重复，两套动画库会让体积变大、节奏打架。
+- three.js、TSL：做不到照片级写实，而且体积大。
+- ammo.js、Rapier：物理引擎容易做出"能拖着玩"的小游戏感（Grok 禁止）。花瓣飘落已经在视频里了。
+- SuperCollider、Strudel 及任何音频库：网站全程静音。Grok 禁止音效奖励。
+- Remotion、HyperFrames：做宣传短视频的工具，不属于这一阶段的网站，以后单独做。
+
 ---
 
 ## 2. 阶段 A：素材（一次出完，每步自检）
@@ -182,6 +203,7 @@ npm run assets:upscale -- public/media/v4/hands public/media/v4/petals-on-nails.
 ## 4. 最终自检（全部满足才算完成）
 
 - [ ] `npm run build` 通过，没有 3D 分包，首屏 JS ≤ 200KB（附 build 输出）。
+- [ ] `package.json` 的 dependencies 里只有白名单里的库（第 1A 节）；如果有例外，报告里写清楚理由和增加的体积。
 - [ ] 所有手部图组用 `assets:qa` 检查都是 PASS（附 `report.json`）。
 - [ ] `thumbs-200.jpg` 上 12 款都能一眼认出来。
 - [ ] 375 和 1440 两个宽度下，从首屏一直滚到设计卡，各截 8–10 张图。确认没有硬切，没有横向滚动条，没有说明文字。
